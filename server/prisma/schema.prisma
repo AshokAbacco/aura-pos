@@ -314,10 +314,13 @@ model Resource {
   branch    Branch   @relation(fields: [branchId], references: [id])
   name      String   // "Chair 1", "Spa Room 2"
   kind      String   @default("CHAIR")
+  floor     String   @default("Ground floor") // groups chairs on the billing counter's floor plan
+  sortOrder Int      @default(0)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   appointments Appointment[]
+  ticket       ChairTicket?
 
   @@unique([branchId, name])
   @@index([tenantId])
@@ -828,6 +831,25 @@ model ParkedCart {
   userId    String   @db.Uuid
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([tenantId, branchId])
+}
+
+/// The open (not yet billed) ticket of one chair/room on the billing counter: what the client has had so far.
+/// At most one per chair. Checkout deletes it in the same transaction that creates the invoice.
+/// `payload` is a UI draft; checkout re-validates and re-prices everything.
+model ChairTicket {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @db.Uuid
+  branchId    String   @db.Uuid
+  resourceId  String   @unique @db.Uuid
+  resource    Resource @relation(fields: [resourceId], references: [id])
+  customerId  String?  @db.Uuid
+  payload     Json
+  version     Int      @default(1) // optimistic concurrency: two counters editing the same chair
+  openedById  String   @db.Uuid
+  openedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([tenantId, branchId])
 }

@@ -75,15 +75,29 @@ export function createApp() {
     }),
   );
 
-  app.get("/health", (_req, res) => res.json({ status: "ok" }));
-  app.get("/ready", async (_req, res) => {
+  // Health checks — no auth, never cached. Use for Render's health check and uptime pingers.
+  //   /health (/api/v1/health): the process is up (cheap; does not touch the database)
+  //   /ready  (/api/v1/ready) : the process can reach PostgreSQL (503 if not)
+  // GET and HEAD both work (some uptime monitors send HEAD).
+  const health = (_req, res) => {
+    res.set("Cache-Control", "no-store");
+    res.json({
+      status: "ok",
+      uptimeSec: Math.round(process.uptime()),
+      time: new Date().toISOString(),
+    });
+  };
+  const ready = async (_req, res) => {
+    res.set("Cache-Control", "no-store");
     try {
       await prisma.$queryRaw`SELECT 1`;
-      res.json({ status: "ready" });
+      res.json({ status: "ready", database: "ok" });
     } catch {
-      res.status(503).json({ status: "database_unavailable" });
+      res.status(503).json({ status: "not_ready", database: "unavailable" });
     }
-  });
+  };
+  app.get(["/health", "/api/v1/health"], health);
+  app.get(["/ready", "/api/v1/ready"], ready);
 
   // Webhooks need the exact raw bytes for signature verification → mounted BEFORE the JSON parser.
   app.use(

@@ -197,15 +197,18 @@ aura-pos/
 **Frontend: `client/src/features/pos/`**
 
 ```
-PosPage.jsx                 the billing counter screen
-pos.routes.jsx              its route (/app/pos)
+FloorPage.jsx               /app/pos — chairs by floor; View bill / Bill on each chair
+ChairPage.jsx               /app/pos/chairs/:id — add or remove items for the client in that chair
+QuickSalePage.jsx           /app/pos/quick — bill without a chair (retail, memberships, appointments)
+pos.routes.jsx              the three routes
 index.js                    what other features may import from POS
-hooks/usePosCart.js         cart, live totals from the server, checkout
-components/
-  CatalogPanel.jsx  CartPanel.jsx  CartLine.jsx  CartTotals.jsx
-  PaymentPicker.jsx  ClientPicker.jsx  CustomChargeModal.jsx  ParkedBillsModal.jsx
-utils/posDraft.js           bill in progress (survives a page reload)
-utils/pos.constants.js
+hooks/usePosCart.js         live totals from the server, payments, checkout
+hooks/useChairTicket.js     a chair's open ticket: auto-save, version check
+hooks/useFloor.js           floor plan data, refreshed every 20 s
+components/floor/           FloorSummary, FloorTabs, ChairCard, BillDrawer, MoveChairModal
+components/chair/           TicketPanel, BookingBanner, SaveStatus
+components/                 CatalogPanel, CartPanel, CartLine, CartTotals, PaymentPicker, ClientPicker, …
+utils/                      posDraft.js, pos.constants.js, floor.js
 ```
 
 **Backend: `server/src/features/pos/`**
@@ -217,6 +220,7 @@ utils/pos.constants.js
 | `pos.service.js` | Business logic and database work |
 | `pos.validation.js` | Rules for incoming data (zod) |
 | `pos.pricing.js` | GST, discounts and totals (pure, unit-tested) |
+| `pos.chairs.js` | Floor plan and chair tickets (open, save, move, clear) |
 
 Every other feature follows the same pattern:
 
