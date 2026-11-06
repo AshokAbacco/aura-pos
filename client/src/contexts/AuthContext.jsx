@@ -29,18 +29,55 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     setSessionLostHandler(() => {
+      if (!mounted) return;
+
       setAccessToken(null);
       setMe(null);
       setStatus("anon");
     });
-    // Restore a session from the HttpOnly refresh cookie on load.
-    refreshSession()
-      .then(loadMe)
-      .catch(() => setStatus("anon"));
-    const onEnt = () => loadMe().catch(() => {});
+
+    const restoreAuth = async () => {
+      try {
+        await refreshSession();
+        const r = await api.get("/auth/me");
+
+        if (!mounted) return;
+
+        const user = r.data.data;
+
+        setMe(user);
+
+        if (!sessionStorage.getItem("aura.branch") && user?.branches?.length) {
+          sessionStorage.setItem("aura.branch", user.branches[0].id);
+        }
+
+        setStatus("authed");
+      } catch (error) {
+        if (!mounted) return;
+
+        setAccessToken(null);
+        setMe(null);
+        setStatus("anon");
+
+        console.error("Session restoration failed:", error);
+      }
+    };
+
+    restoreAuth();
+
+    const onEnt = () => {
+      loadMe().catch(console.error);
+    };
+
     window.addEventListener("aura:entitlement", onEnt);
-    return () => window.removeEventListener("aura:entitlement", onEnt);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener("aura:entitlement", onEnt);
+    };
   }, [loadMe]);
 
   const login = useCallback(
