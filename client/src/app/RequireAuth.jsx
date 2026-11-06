@@ -60,10 +60,10 @@ const Loading = () => (
       .salora-logo-card {
         position: relative;
         z-index: 2;
-        width: 128px;
-        height: 128px;
-        padding: 8px;
-        border-radius: 28px;
+        width: 148px;
+        height: 148px;
+        padding: 2px;
+        border-radius: 75px;
         background: rgba(255,255,255,.7);
         border: 1px solid rgba(201,154,69,.35);
         box-shadow:
@@ -292,7 +292,7 @@ const Loading = () => (
 
           <div className="salora-logo-card">
             <img
-              src="/logo-favicon.png"
+              src="/logo/brand-logo-circle.png"
               alt="Salora Glam Logo"
               className="salora-logo"
             />
