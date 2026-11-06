@@ -5,13 +5,13 @@
 
 // ───────────── Brand, company and contact ─────────────
 export const BRAND = {
-  name: "Aura POS",
+  name: "SALORA GLAM",
   tagline: "Billing, appointments and accounts for salons and spas in India.",
 };
 
 export const COMPANY = {
   name: "Abacco Technology",
-  website: "https://www.abaccotech.com", // ← confirm the company website address
+  website: "https://abaccotech.com", // ← confirm the company website address
   email: "info@abaccotech.com",
   phone: "+91 99724 52044",
   phoneHref: "+919972452044",
@@ -137,7 +137,7 @@ export const FAQ = [
   ],
   [
     "Can I use it for more than one branch?",
-    "Yes, on the Multi-branch plan. Each branch has its own invoice numbering, stock and staff, and you can see reports for one branch or all of them.",
+    "Yes. Professional covers up to 5 branches and Customize up to 10. Each branch has its own invoice numbering, stock and staff, and you can see reports for one branch or all of them.",
   ],
   [
     "Do I need special hardware?",
@@ -339,10 +339,10 @@ export const PLAN_FEATURE_LABELS = {
   inventory: "Inventory & stock management",
   payroll: "Staff commission & payroll",
   reports: "Financial reports & profit/loss",
-  "reports.advanced": "Advanced reports & analytics",
-  multibranch: "Multi-branch inventory & reports",
-  notifications: "Automated reminders",
-  online_booking: "Online booking page",
+  app_listing: "Salora Glam App display",
+  "reports.advanced": "Payroll, advanced reports and reminders",
+  // Codes without a label here (multibranch, notifications, online_booking) still work but don't get a tick of their
+  // own: branches already have their own line, and reminders are covered by the line above.
 };
 /** Included in every plan (not gated by a feature code). */
 export const ALWAYS_INCLUDED = [
@@ -560,7 +560,7 @@ export const CONTACT_PERKS = [
   ["gear", "Tailored Solutions"],
 ];
 export const INTEREST_OPTIONS = [
-  "Aura POS (Salon & Spa)",
+  "Salora Glam (Salon & Spa)",
   "The Motor Desk",
   "Motor Konnect",
   "Abacco Education ERP",
@@ -586,19 +586,19 @@ export const CONTACT_PRODUCTS = [
 ];
 export const CONTACT_FAQ = [
   [
-    "How can I request a demo of Aura POS?",
-    "Send us a message using the form on this page and choose “Aura POS” — our team will get in touch to arrange a demo. You can also start the 14-day free trial straight away.",
+    "How can I request a demo of Salora Glam?",
+    "Send us a message using the form on this page and choose “Salora Glam” — our team will get in touch to arrange a demo. You can also start the 14-day free trial straight away.",
   ],
   [
     "Which plan is right for my salon or spa?",
-    "Starter suits a single salon, Professional adds payroll and advanced reports, and Multi-branch is for chains. The Pricing page compares them side by side.",
+    "Starter suits a single salon, Professional adds staff commission and payroll for up to 5 branches, and Customize adds advanced reports, reminders and your own 5-page website and brand app. The Pricing page compares them side by side.",
   ],
   [
     "Do you provide support after purchase?",
     "Yes. Contact us by email or phone during business hours and our team will help you.",
   ],
   [
-    "Can I customize Aura POS for my business?",
+    "Can I customize Salora Glam for my business?",
     "Services, prices, tax rates, receipts, roles and permissions are all set by you. For larger changes, tell us what you need and we’ll discuss it.",
   ],
   [

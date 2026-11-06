@@ -2,7 +2,7 @@ import SiteLayout from "../../../layouts/site/SiteLayout.jsx";
 import { IMG, IconCircle, LeafSprig } from "../../website";
 
 const DEFAULT_HERO = {
-  eyebrow: "Aura POS",
+  eyebrow: "Salora Glam",
   title: ["Run your salon", "the simple way"],
   accentLine: 1,
   body: "Billing, appointments, clients, staff and reports for your salon or spa — all in one place.",

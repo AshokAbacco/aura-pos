@@ -25,7 +25,7 @@ const mapsEmbed = `https://www.google.com/maps?q=${encodeURIComponent(COMPANY.ma
 export default function ContactPage() {
   usePageMeta(
     "Contact",
-    "Talk to the Aura POS team about a demo, pricing or a custom solution.",
+    "Talk to the Salora Glam team about a demo, pricing or a custom solution.",
   );
   const ref = useReveal();
   const cards = [
@@ -189,7 +189,7 @@ export default function ContactPage() {
             Frequently Asked Questions
           </h2>
           <p className="mb-5 mt-2 text-sm text-stone-600">
-            Quick answers to common questions about Aura POS and our services.
+            Quick answers to common questions about Salora Glam and our services.
           </p>
           <FaqAccordion items={CONTACT_FAQ} defaultOpen={-1} />
         </div>
@@ -198,7 +198,7 @@ export default function ContactPage() {
       <CtaBanner
         eyebrow="Ready to grow your salon business?"
         title="Let’s Build Something Amazing Together"
-        body="Whether you have a question, need a demo, or want a custom solution, our team is here to help you get started with Aura POS."
+        body="Whether you have a question, need a demo, or want a custom solution, our team is here to help you get started with Salora Glam."
         cta="Contact Us"
         to="/contact"
         image={IMG.ctaSpaCandles}

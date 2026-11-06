@@ -48,7 +48,7 @@ export function PricingHero() {
             <br />
             salon with
             <br />
-            Aura POS
+            Salora Glam
           </p>
         </div>
       </div>

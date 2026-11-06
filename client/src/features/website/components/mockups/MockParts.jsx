@@ -6,10 +6,18 @@ const NAV = [[LuLayoutDashboard, 'Dashboard'], [LuCalendarDays, 'Appointments'],
 export function MockSidebar({ active = 'Dashboard' }) {
   return (
     <aside className="w-[27%] shrink-0 border-r border-stone-100 bg-white p-2.5">
-      <p className="mb-3 px-1 font-display text-[11px] font-semibold text-ink">Aura POS</p>
+      <p className="mb-3 px-1 font-display text-[11px] font-semibold text-ink">
+        Salora Glam
+      </p>
       <ul className="space-y-0.5">
         {NAV.map(([Icon, l]) => (
-          <li key={l} className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[8px] ${l === active ? 'bg-petal font-semibold text-mauve' : 'text-stone-500'}`}><Icon size={9} aria-hidden />{l}</li>
+          <li
+            key={l}
+            className={`flex items-center gap-1.5 rounded-md px-1.5 py-1 text-[8px] ${l === active ? "bg-petal font-semibold text-mauve" : "text-stone-500"}`}
+          >
+            <Icon size={9} aria-hidden />
+            {l}
+          </li>
         ))}
       </ul>
     </aside>

@@ -25,7 +25,7 @@ export function HomeHero() {
             <span className="text-mauve">All in one place.</span>
           </h1>
           <p className="mt-6 max-w-md text-[15px] leading-relaxed text-stone-700">
-            Aura POS brings your billing, appointments, staff and GST-ready
+            Salora Glam brings your billing, appointments, staff and GST-ready
             accounts together, so you can run your salon smoother, smarter and
             more profitable.
           </p>

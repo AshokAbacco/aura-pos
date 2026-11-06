@@ -1,4 +1,4 @@
-# Aura POS — multi-tenant Salon & Spa POS
+# Salora Glam — multi-tenant Salon & Spa POS
 
 React (JSX, Vite, Tailwind) + Express 5 + PostgreSQL/Prisma 7 + Razorpay.
 Rebuilt from the `profit_loss_ledger_with_graphs (1).html` prototype (kept at `docs/reference-prototype.html`).

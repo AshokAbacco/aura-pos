@@ -7,7 +7,10 @@ import { ABOUT_ICONS, COMPANY } from './utils/siteContent.js';
 import { IMG } from './utils/siteImages.js';
 
 export default function AboutPage() {
-  usePageMeta('About', `Aura POS is salon and spa management software built by ${COMPANY.name}.`);
+  usePageMeta(
+    "About",
+    `Salora Glam is salon and spa management software built by ${COMPANY.name}.`,
+  );
   const ref = useReveal();
   return (
     <div ref={ref}>
@@ -19,7 +22,7 @@ export default function AboutPage() {
       <CoreValues />
       <OurProduct />
       <OurApproach />
-      <CtaBanner title="Let’s Build Something Meaningful Together" body={`Aura POS is brought to you by ${COMPANY.name}. Whether you are a single salon or a growing chain, we are here to help you with the right technology.`} cta="Contact Us" to="/contact" image={IMG.ctaSpaCandles} />
+      <CtaBanner title="Let’s Build Something Meaningful Together" body={`Salora Glam is brought to you by ${COMPANY.name}. Whether you are a single salon or a growing chain, we are here to help you with the right technology.`} cta="Contact Us" to="/contact" image={IMG.ctaSpaCandles} />
     </div>
   );
 }

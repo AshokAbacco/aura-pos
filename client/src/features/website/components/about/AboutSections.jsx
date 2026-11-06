@@ -35,7 +35,7 @@ export function AboutHero() {
       <LeafSprig className="absolute -left-6 top-24 h-44 max-md:hidden" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 pb-14 pt-10 md:grid-cols-[1.1fr_1fr]">
         <div className="fade-up">
-          <Eyebrow>About Aura POS</Eyebrow>
+          <Eyebrow>About Salora Glam</Eyebrow>
           <h1 className="mt-5 font-display text-[2.7rem] leading-[1.05] text-ink md:text-[3.5rem]">
             Built by
             <br />
@@ -44,7 +44,7 @@ export function AboutHero() {
             for the <span className="text-mauve">Salon &amp; Spa Industry</span>
           </h1>
           <p className="mt-5 max-w-md text-[15px] leading-relaxed text-stone-700">
-            Aura POS is a powerful salon and spa management software by{" "}
+            Salora Glam is a powerful salon and spa management software by{" "}
             {COMPANY.name}. We combine technology, creativity and business
             understanding to help salon owners run their businesses with ease
             and grow efficiently.
@@ -103,17 +103,17 @@ export function WhyWeCreated() {
     <section className="bg-gradient-to-b from-cream to-petal/60">
       <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 md:grid-cols-2">
         <div data-reveal>
-          <Eyebrow>Why we created Aura POS</Eyebrow>
+          <Eyebrow>Why we created Salora Glam</Eyebrow>
           <h2 className="mt-4 font-display text-4xl leading-tight text-ink">
             A POS Designed Specifically for Salon &amp; Spa Businesses
           </h2>
           <p className="mt-4 text-sm leading-relaxed text-stone-600">
             Through our experience in building industry-specific software, we
             saw the need for a simple, powerful and affordable salon management
-            solution. That’s how Aura POS was created.
+            solution. That’s how Salora Glam was created.
           </p>
           <p className="mt-3 text-sm leading-relaxed text-stone-600">
-            Aura POS helps salon and spa owners manage appointments, billing,
+            Salora Glam helps salon and spa owners manage appointments, billing,
             customers, inventory, staff, memberships and business performance —
             all in one place.
           </p>
@@ -163,7 +163,7 @@ export function MissionVision() {
     <section className="mx-auto max-w-5xl px-5 py-16">
       <SectionTitle
         title="Our Mission & Vision"
-        subtitle={`Our mission and vision guide everything we build at ${COMPANY.name}, including Aura POS.`}
+        subtitle={`Our mission and vision guide everything we build at ${COMPANY.name}, including Salora Glam.`}
       />
       <div className="mt-10 grid gap-6 md:grid-cols-2">
         {cards.map(([icon, t, b]) => (
@@ -213,7 +213,7 @@ export function OurProduct() {
     <section className="border-t border-blush/70 bg-gradient-to-b from-cream to-petal/50">
       <div className="mx-auto max-w-6xl px-5 py-16">
         <SectionTitle
-          title="Our Product – Aura POS"
+          title="Our Product – Salora Glam"
           subtitle={`A complete salon and spa management software by ${COMPANY.name}.`}
         />
         <div className="mt-10 grid items-center gap-10 lg:grid-cols-[1.25fr_1fr]">
@@ -226,7 +226,7 @@ export function OurProduct() {
             </TabletFrame>
             <PhoneFrame className="absolute -right-1 bottom-0 w-[18%]">
               <div className="aspect-[9/17] bg-[#fcfafa] p-1.5 text-[5px]">
-                <p className="font-semibold text-ink">Aura POS</p>
+                <p className="font-semibold text-ink">Salora Glam</p>
                 {[1, 2, 3, 4, 5].map((i) => (
                   <div
                     key={i}

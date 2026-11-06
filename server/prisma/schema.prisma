@@ -1,4 +1,4 @@
-// Aura POS — multi-tenant Salon & Spa POS
+// Salora Glam — multi-tenant Salon & Spa POS
 // Conventions:
 //  * Every tenant-owned model has `tenantId` and an index starting with it.
 //  * Money is Decimal(14,2); rates are Decimal(6,3) percentages (18.000 = 18 %).

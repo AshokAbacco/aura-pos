@@ -9,7 +9,7 @@ const HERO = {
   eyebrow: null,
   title: ["Get back to", "your business", "in no time"],
   accentLine: 2,
-  body: "Reset your password and continue managing your appointments, clients, staff and billing with Aura POS.",
+  body: "Reset your password and continue managing your appointments, clients, staff and billing with Salora Glam.",
   points: [
     ["mail", "Secure Reset Link", "We’ll send a secure link to your email."],
     ["shield", "Your Data Stays Safe", "Your information is always protected."],

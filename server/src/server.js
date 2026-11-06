@@ -12,7 +12,10 @@ const stopKeepAlive = startKeepAlive(
   env.KEEP_ALIVE_INTERVAL_MIN,
 );
 const server = app.listen(env.PORT, () =>
-  logger.info({ port: env.PORT, env: env.NODE_ENV }, "Aura POS API listening"),
+  logger.info(
+    { port: env.PORT, env: env.NODE_ENV },
+    "Salora Glam API listening",
+  ),
 );
 
 // Graceful shutdown: stop accepting, let in-flight requests finish, then close the pool.

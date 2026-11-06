@@ -17,12 +17,30 @@ export async function payForPlan({ plan, me }) {
   await loadScript();
   await new Promise((resolve, reject) => {
     const rzp = new window.Razorpay({
-      key: data.keyId, order_id: data.orderId, amount: data.amountPaise, currency: data.currency,
-      name: 'Aura POS', description: `${plan.name} plan for ${me.tenant.displayName}`,
+      key: data.keyId,
+      order_id: data.orderId,
+      amount: data.amountPaise,
+      currency: data.currency,
+      name: "Salora Glam",
+      description: `${plan.name} plan for ${me.tenant.displayName}`,
       prefill: { name: me.user.name, email: me.user.email },
-      theme: { color: '#a12b3c' },
-      handler: async (resp) => { try { await api.post('/billing/verify', resp); resolve(); } catch (e) { reject(e); } },
-      modal: { ondismiss: () => reject(new Error('Payment window closed — you have not been charged for this attempt.')) },
+      theme: { color: "#a12b3c" },
+      handler: async (resp) => {
+        try {
+          await api.post("/billing/verify", resp);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      },
+      modal: {
+        ondismiss: () =>
+          reject(
+            new Error(
+              "Payment window closed — you have not been charged for this attempt.",
+            ),
+          ),
+      },
     });
     rzp.on('payment.failed', (r) => reject(new Error(r.error?.description ?? 'Payment failed')));
     rzp.open();

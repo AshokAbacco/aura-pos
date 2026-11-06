@@ -17,17 +17,8 @@ if (process.env.NODE_ENV === "production") {
   process.exit(1);
 }
 
-const ALL_FEATURES = [
-  "pos",
-  "appointments",
-  "inventory",
-  "payroll",
-  "reports",
-  "reports.advanced",
-  "multibranch",
-  "online_booking",
-  "notifications",
-];
+// Public plans (keep in step with prisma/migrations/20261106000000_plan_pricing, which updates existing databases).
+// Feature order = order of the ticks on the pricing cards.
 const PLANS = [
   {
     code: "trial",
@@ -47,11 +38,11 @@ const PLANS = [
     code: "starter-monthly",
     name: "Starter",
     interval: "MONTHLY",
-    price: "999.00",
+    price: "500.00",
     graceDays: 3,
     maxStaff: 5,
     maxBranches: 1,
-    features: ["pos", "appointments", "inventory", "reports"],
+    features: ["pos", "appointments", "inventory", "reports", "app_listing"],
     sortOrder: 1,
     description: "Single-branch salon essentials.",
   },
@@ -59,18 +50,18 @@ const PLANS = [
     code: "pro-monthly",
     name: "Professional",
     interval: "MONTHLY",
-    price: "2499.00",
+    price: "799.00",
     graceDays: 5,
     maxStaff: 15,
-    maxBranches: 1,
+    maxBranches: 5,
     features: [
       "pos",
       "appointments",
       "inventory",
       "payroll",
       "reports",
-      "reports.advanced",
-      "notifications",
+      "app_listing",
+      "multibranch",
     ],
     sortOrder: 2,
     description: "Payroll, advanced reports and reminders.",
@@ -92,20 +83,31 @@ const PLANS = [
       "reports.advanced",
       "notifications",
     ],
+    isActive: false,
+    isPublic: false,
     sortOrder: 3,
-    description: "Two months free versus monthly.",
+    description: "Retired.",
   },
   {
     code: "business-monthly",
-    name: "Multi-branch",
+    name: "Customize",
     interval: "MONTHLY",
-    price: "5999.00",
+    price: "1500.00",
     graceDays: 7,
-    maxStaff: 60,
-    maxBranches: 5,
-    features: ALL_FEATURES,
+    maxStaff: 100,
+    maxBranches: 10,
+    features: [
+      "pos",
+      "appointments",
+      "inventory",
+      "payroll",
+      "reports",
+      "reports.advanced",
+      "notifications",
+      "multibranch",
+    ],
     sortOrder: 4,
-    description: "Up to 5 branches with consolidated reporting.",
+    description: "5-page website & own brand app.",
   },
 ];
 
@@ -137,7 +139,7 @@ async function main() {
     console.log(`platform admin: ${adminEmail}`);
   }
 
-  const ownerEmail = "owner@gmail.com";
+  const ownerEmail = "owner@auraluxe.demo";
   if (await prisma.user.findUnique({ where: { email: ownerEmail } })) {
     console.log("demo tenant already present — done");
     return;
@@ -225,7 +227,7 @@ async function main() {
           name: "Demo Owner",
           role: "OWNER",
           allBranches: true,
-          passwordHash: await hashPassword("123456"),
+          passwordHash: await hashPassword("DemoOwner-2026!"),
           emailVerifiedAt: now,
           termsAcceptedAt: now,
         },
@@ -233,11 +235,11 @@ async function main() {
       await tx.user.create({
         data: {
           tenantId: T,
-          email: "frontdesk@gmail.com",
+          email: "frontdesk@auraluxe.demo",
           name: "Front Desk",
           role: "RECEPTIONIST",
           branchIds: [branch.id],
-          passwordHash: await hashPassword("123456"),
+          passwordHash: await hashPassword("DemoDesk-2026!"),
           emailVerifiedAt: now,
           termsAcceptedAt: now,
         },

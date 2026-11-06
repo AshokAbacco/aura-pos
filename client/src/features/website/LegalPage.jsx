@@ -3,7 +3,7 @@ import { Eyebrow, LeafSprig } from './components/common';
 
 /** Placeholder until the operator publishes lawyer-reviewed text. Clearly marked as such. */
 export default function LegalPage({ title }) {
-  usePageMeta(title, `${title} for Aura POS.`);
+  usePageMeta(title, `${title} for Salora Glam.`);
   return (
     <section className="relative mx-auto max-w-3xl px-5 py-16">
       <LeafSprig flip className="absolute -right-10 top-6 h-40 max-md:hidden" />

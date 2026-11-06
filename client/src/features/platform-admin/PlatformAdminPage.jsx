@@ -27,16 +27,40 @@ export default function PlatformAdminPage() {
   return (
     <div className="min-h-screen bg-stone-50">
       <header className="flex items-center justify-between gap-3 bg-stone-900 px-4 py-3 text-white md:px-6">
-        <p className="font-display text-lg font-bold">Aura POS <span className="font-sans text-sm font-normal text-stone-400">platform admin</span></p>
-        <Button size="sm" onClick={logout}><FiLogOut /> Sign out</Button>
+        <p className="font-display text-lg font-bold">
+          Salora Glam{" "}
+          <span className="font-sans text-sm font-normal text-stone-400">
+            platform admin
+          </span>
+        </p>
+        <Button size="sm" onClick={logout}>
+          <FiLogOut /> Sign out
+        </Button>
       </header>
-      <nav className="flex gap-1 overflow-x-auto border-b border-stone-200 bg-white px-4 md:px-6" role="tablist">
+      <nav
+        className="flex gap-1 overflow-x-auto border-b border-stone-200 bg-white px-4 md:px-6"
+        role="tablist"
+      >
         {TABS.map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-            className={cx('whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold', tab === k ? 'border-rose-700 text-stone-900' : 'border-transparent text-stone-500 hover:text-stone-800')}>{l}</button>
+          <button
+            key={k}
+            role="tab"
+            aria-selected={tab === k}
+            onClick={() => setTab(k)}
+            className={cx(
+              "whitespace-nowrap border-b-2 px-3 py-3 text-sm font-semibold",
+              tab === k
+                ? "border-rose-700 text-stone-900"
+                : "border-transparent text-stone-500 hover:text-stone-800",
+            )}
+          >
+            {l}
+          </button>
         ))}
       </nav>
-      <main className="p-4 md:p-6"><Panel /></main>
+      <main className="p-4 md:p-6">
+        <Panel />
+      </main>
     </div>
   );
 }

@@ -32,7 +32,11 @@ export async function invite(ctx, body) {
       await audit(tx, ctx, 'user.invite', { entityType: 'User', entityId: u.id, detail: { role: body.role } });
       return u;
     });
-    await sendEmail({ to: user.email, subject: `You're invited to ${ctx.tenant.displayName}`, text: `${ctx.user.name} invited you to join ${ctx.tenant.displayName} on Aura POS.\nSet your password: ${env.CLIENT_ORIGIN}/accept-invite?token=${token}\nThis link expires in 7 days.` });
+    await sendEmail({
+      to: user.email,
+      subject: `You're invited to ${ctx.tenant.displayName}`,
+      text: `${ctx.user.name} invited you to join ${ctx.tenant.displayName} on Salora Glam.\nSet your password: ${env.CLIENT_ORIGIN}/accept-invite?token=${token}\nThis link expires in 7 days.`,
+    });
     return view(user);
   } catch (e) { if (isUniqueViolation(e)) throw conflict('EMAIL_TAKEN', 'A user with this email already exists'); throw e; }
 }

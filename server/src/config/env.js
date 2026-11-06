@@ -34,7 +34,7 @@ const schema = z.object({
   LOG_LEVEL: z
     .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
     .default("info"),
-  EMAIL_FROM: z.string().default("Aura POS <no-reply@example.com>"),
+  EMAIL_FROM: z.string().default("Salora Glam <no-reply@example.com>"),
   SMTP_URL: z.string().default(""), // empty → emails are logged, not sent (development only)
 });
 

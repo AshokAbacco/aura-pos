@@ -16,7 +16,7 @@ const schema = z.object({
 
 const HERO = {
   eyebrow: "Welcome back",
-  title: ["Welcome back", "to Aura POS"],
+  title: ["Welcome back", "to Salora Glam"],
   accentLine: -1,
   body: "Sign in to manage your salon’s appointments, billing, clients, staff and business all in one place.",
   points: [
@@ -68,7 +68,7 @@ export default function LoginPage() {
         title: [
           "Welcome back",
           <>
-            to <span className="text-mauve">Aura POS</span>
+            to <span className="text-mauve">SALORA GLAM</span>
           </>,
         ],
       }}
@@ -76,7 +76,7 @@ export default function LoginPage() {
       subtitle="To your salon’s billing counter."
       footer={
         <>
-          New to Aura POS?{" "}
+          New to SALORA GLAM?{" "}
           <Link
             className="font-semibold text-mauve underline underline-offset-2"
             to="/register"
