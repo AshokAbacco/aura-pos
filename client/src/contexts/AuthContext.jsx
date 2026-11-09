@@ -8,6 +8,7 @@ import {
 } from "react";
 import {
   api,
+  endSession,
   refreshSession,
   setAccessToken,
   setSessionLostHandler,
@@ -29,55 +30,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
-    let mounted = true;
-
     setSessionLostHandler(() => {
-      if (!mounted) return;
-
       setAccessToken(null);
       setMe(null);
       setStatus("anon");
     });
-
-    const restoreAuth = async () => {
-      try {
-        await refreshSession();
-        const r = await api.get("/auth/me");
-
-        if (!mounted) return;
-
-        const user = r.data.data;
-
-        setMe(user);
-
-        if (!sessionStorage.getItem("aura.branch") && user?.branches?.length) {
-          sessionStorage.setItem("aura.branch", user.branches[0].id);
-        }
-
-        setStatus("authed");
-      } catch (error) {
-        if (!mounted) return;
-
-        setAccessToken(null);
-        setMe(null);
-        setStatus("anon");
-
-        console.error("Session restoration failed:", error);
-      }
-    };
-
-    restoreAuth();
-
-    const onEnt = () => {
-      loadMe().catch(console.error);
-    };
-
+    // Restore a session on load (HttpOnly cookie in the browser, saved token in the app).
+    refreshSession()
+      .then(loadMe)
+      .catch(() => setStatus("anon"));
+    const onEnt = () => loadMe().catch(() => {});
     window.addEventListener("aura:entitlement", onEnt);
-
-    return () => {
-      mounted = false;
-      window.removeEventListener("aura:entitlement", onEnt);
-    };
+    return () => window.removeEventListener("aura:entitlement", onEnt);
   }, [loadMe]);
 
   const login = useCallback(
@@ -98,8 +62,7 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(async () => {
-    await api.post("/auth/logout").catch(() => {});
-    setAccessToken(null);
+    await endSession();
     setMe(null);
     setStatus("anon");
     sessionStorage.removeItem("aura.branch");

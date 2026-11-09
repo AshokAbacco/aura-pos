@@ -4,6 +4,14 @@
   "version": "0.1.0",
   "type": "module",
   "dependencies": {
+    "@capacitor/android": "8.6.0",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.0",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4",
     "@hookform/resolvers": "5.9.2",
     "axios": "1.21.0",
     "react": "19.3.1",
@@ -16,6 +24,8 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@capacitor/assets": "4.0.0",
+    "@capacitor/cli": "8.6.0",
     "@tailwindcss/vite": "4.3.3",
     "@vitejs/plugin-react": "6.1.2",
     "playwright-core": "1.64.1",
@@ -28,6 +38,9 @@
     "preview": "vite preview",
     "e2e:screens": "node e2e/screens.mjs",
     "setup": "node -e \"const f=require('fs');if(!f.existsSync('.env')){f.copyFileSync('.env.example','.env');console.log('Created client/.env')}\"",
-    "build:single": "vite build --mode single"
+    "build:single": "vite build --mode single",
+    "build:android": "vite build --mode android && cap sync android",
+    "android:open": "cap open android",
+    "android:icons": "capacitor-assets generate --android --iconBackgroundColor \"#fbf5f2\" --splashBackgroundColor \"#fbf5f2\""
   }
 }

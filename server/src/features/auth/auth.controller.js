@@ -33,6 +33,32 @@ function requireCsrfHeader(req) {
     );
 }
 
+/**
+ * The Android app (Capacitor) runs on its own origin, and Android's WebView refuses cookies set by
+ * another site, so the HttpOnly refresh cookie can't work there. The app identifies itself with
+ * `X-Client-Platform: native`; it then receives the refresh token in the response body, keeps it in
+ * the device's app storage, and sends it back in the body to /refresh and /logout. Browsers keep
+ * using the cookie only. The token is the same rotating, hashed, reuse-detecting refresh token.
+ */
+const isNative = (req) => req.get("x-client-platform") === "native";
+function incomingRefreshToken(req) {
+  const fromCookie = req.cookies?.[REFRESH_COOKIE];
+  if (fromCookie) return fromCookie;
+  const fromBody = isNative(req) ? req.body?.refreshToken : undefined;
+  return typeof fromBody === "string" && fromBody.length <= 200
+    ? fromBody
+    : undefined;
+}
+function issueRefresh(req, res, refreshToken, { persistent = true } = {}) {
+  if (isNative(req)) res.locals.refreshToken = refreshToken;
+  else setRefreshCookie(res, REFRESH_COOKIE, refreshToken, { persistent });
+}
+/** Response body for a new session: the access token, plus the refresh token for the app. */
+const tokens = (req, res, accessToken) => ({
+  accessToken,
+  ...(isNative(req) ? { refreshToken: res.locals.refreshToken } : {}),
+});
+
 async function startSession(req, res, user, { remember = true } = {}) {
   const { refreshToken, accessToken } = await createSession({
     principalType: "user",
@@ -40,7 +66,7 @@ async function startSession(req, res, user, { remember = true } = {}) {
     tenantId: user.tenantId,
     req,
   });
-  setRefreshCookie(res, REFRESH_COOKIE, refreshToken, { persistent: remember });
+  issueRefresh(req, res, refreshToken, { persistent: remember });
   return accessToken;
 }
 
@@ -53,7 +79,7 @@ export async function register(req, res) {
   await auth.sendVerificationEmail(user);
   const accessToken = await startSession(req, res, user);
   created(res, {
-    accessToken,
+    ...tokens(req, res, accessToken),
     user: { id: user.id, email: user.email, name: user.name },
     tenant: { id: tenant.id, displayName: tenant.displayName },
   });
@@ -62,27 +88,30 @@ export async function register(req, res) {
 export async function login(req, res) {
   const body = parse(loginSchema, req.body);
   const user = await auth.checkCredentials(body, req.id);
-  ok(res, {
-    accessToken: await startSession(req, res, user, {
-      remember: body.remember,
-    }),
-  });
+  ok(
+    res,
+    tokens(
+      req,
+      res,
+      await startSession(req, res, user, { remember: body.remember }),
+    ),
+  );
 }
 
 export async function refresh(req, res) {
   requireCsrfHeader(req);
   try {
     const { refreshToken, accessToken, principalId } = await rotateRefreshToken(
-      req.cookies?.[REFRESH_COOKIE],
+      incomingRefreshToken(req),
       "user",
       req,
     );
     const user = await prisma.user.findUnique({ where: { id: principalId } });
     if (!user?.isActive) throw unauthorized("Account disabled");
-    setRefreshCookie(res, REFRESH_COOKIE, refreshToken, {
+    issueRefresh(req, res, refreshToken, {
       persistent: !req.cookies?.[SESSION_ONLY_COOKIE],
     });
-    ok(res, { accessToken });
+    ok(res, tokens(req, res, accessToken));
   } catch (err) {
     clearRefreshCookie(res, REFRESH_COOKIE);
     throw err;
@@ -91,7 +120,7 @@ export async function refresh(req, res) {
 
 export async function logout(req, res) {
   requireCsrfHeader(req);
-  await revokeSessionByToken(req.cookies?.[REFRESH_COOKIE], "LOGOUT");
+  await revokeSessionByToken(incomingRefreshToken(req), "LOGOUT");
   clearRefreshCookie(res, REFRESH_COOKIE);
   res.status(204).end();
 }
@@ -161,7 +190,7 @@ export async function changePassword(req, res) {
 
 export async function acceptInvite(req, res) {
   const user = await auth.acceptInvite(parse(acceptInviteSchema, req.body));
-  ok(res, { accessToken: await startSession(req, res, user) });
+  ok(res, tokens(req, res, await startSession(req, res, user)));
 }
 
 export async function listSessions(req, res) {

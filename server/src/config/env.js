@@ -14,6 +14,16 @@ const schema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().url(),
   CLIENT_ORIGIN: z.string().url().default("http://localhost:5173"), // React app origin (CORS allow-list, links in emails)
+  // More origins allowed to call the API, comma separated. The Android app (Capacitor) is https://localhost.
+  EXTRA_CORS_ORIGINS: z
+    .string()
+    .default("")
+    .transform((v) =>
+      v
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean),
+    ),
   API_PUBLIC_URL: z.string().url().default("http://localhost:4000"),
   JWT_ACCESS_SECRET: z.string().min(32),
   ACCESS_TOKEN_TTL_SEC: z.coerce.number().int().positive().default(900),

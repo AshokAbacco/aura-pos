@@ -316,3 +316,18 @@ body {
     animation: none !important;
   }
 }
+
+/* ───────────── Android app (Capacitor) ───────────── */
+/* Keep content clear of the status bar / gesture bar on edge-to-edge Android. */
+.is-native body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* No accidental text selection or long-press callouts on buttons and cards. */
+.is-native button,
+.is-native a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Salora Glam</string>
+    <string name="title_activity_main">SALORA GLAM</string>
+    <string name="package_name">com.abaccotech.saloraglam</string>
+    <string name="custom_url_scheme">com.abaccotech.saloraglam</string>
+</resources>

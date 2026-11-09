@@ -62,7 +62,7 @@ export function createApp() {
   app.use(helmet({ contentSecurityPolicy: false })); // CSP for the SPA is set below when serving it
   app.use(
     cors({
-      origin: [env.CLIENT_ORIGIN],
+      origin: [env.CLIENT_ORIGIN, ...env.EXTRA_CORS_ORIGINS],
       credentials: true,
       allowedHeaders: [
         "Content-Type",
@@ -70,8 +70,9 @@ export function createApp() {
         "X-Requested-With",
         "Idempotency-Key",
         "X-Branch-Id",
+        "X-Client-Platform",
       ],
-      exposedHeaders: ["x-request-id"],
+      exposedHeaders: ["x-request-id", "content-disposition"],
     }),
   );
 

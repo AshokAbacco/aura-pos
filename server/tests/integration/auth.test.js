@@ -241,3 +241,105 @@ describe("remember me", () => {
     ).toMatch(/Max-Age/i);
   });
 });
+
+describe("Android app (native) sessions", () => {
+  const PASSWORD = "correct-horse-battery";
+  const native = (req) =>
+    req
+      .set("X-Client-Platform", "native")
+      .set("X-Requested-With", "XMLHttpRequest")
+      .set("Origin", "https://localhost");
+
+  it("gets the refresh token in the body (no cookie), rotates it, detects reuse and logs out", async () => {
+    const s = await registerSalon("Native App");
+    await prisma.user.update({
+      where: { email: s.email },
+      data: { passwordHash: await hashPassword(PASSWORD) },
+    });
+
+    const login = await native(api().post("/api/v1/auth/login")).send({
+      email: s.email,
+      password: PASSWORD,
+    });
+    expect(login.status).toBe(200);
+    expect(login.headers["access-control-allow-origin"]).toBe(
+      "https://localhost",
+    );
+    expect(login.headers["set-cookie"] ?? []).not.toEqual(
+      expect.arrayContaining([expect.stringMatching(/^aura_rt=/)]),
+    );
+    const first = login.body.data.refreshToken;
+    expect(first).toMatch(/^[\w-]{20,}$/);
+
+    const r1 = await native(api().post("/api/v1/auth/refresh")).send({
+      refreshToken: first,
+    });
+    expect(r1.status).toBe(200);
+    const second = r1.body.data.refreshToken;
+    expect(second).not.toBe(first);
+    expect(r1.body.data.accessToken).toBeTruthy();
+
+    // Using the old token again = theft signal: the whole session is revoked
+    expect(
+      (
+        await native(api().post("/api/v1/auth/refresh")).send({
+          refreshToken: first,
+        })
+      ).status,
+    ).toBe(401);
+    expect(
+      (
+        await native(api().post("/api/v1/auth/refresh")).send({
+          refreshToken: second,
+        })
+      ).status,
+    ).toBe(401);
+  });
+
+  it("logout revokes the body token", async () => {
+    const s = await registerSalon("Native Logout");
+    await prisma.user.update({
+      where: { email: s.email },
+      data: { passwordHash: await hashPassword(PASSWORD) },
+    });
+    const t = (
+      await native(api().post("/api/v1/auth/login")).send({
+        email: s.email,
+        password: PASSWORD,
+      })
+    ).body.data.refreshToken;
+    expect(
+      (
+        await native(api().post("/api/v1/auth/logout")).send({
+          refreshToken: t,
+        })
+      ).status,
+    ).toBe(204);
+    expect(
+      (
+        await native(api().post("/api/v1/auth/refresh")).send({
+          refreshToken: t,
+        })
+      ).status,
+    ).toBe(401);
+  });
+
+  it("a browser request never accepts a token from the body", async () => {
+    const s = await registerSalon("Browser Body");
+    await prisma.user.update({
+      where: { email: s.email },
+      data: { passwordHash: await hashPassword(PASSWORD) },
+    });
+    const t = (
+      await native(api().post("/api/v1/auth/login")).send({
+        email: s.email,
+        password: PASSWORD,
+      })
+    ).body.data.refreshToken;
+    const r = await api()
+      .post("/api/v1/auth/refresh")
+      .set("X-Requested-With", "XMLHttpRequest")
+      .send({ refreshToken: t });
+    expect(r.status).toBe(401);
+  });
+});
