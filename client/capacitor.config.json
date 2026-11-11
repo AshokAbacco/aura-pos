@@ -1,6 +1,6 @@
 {
-  "appId": "com.abaccotech.aurapos",
-  "appName": "Salora Glam",
+  "appId": "com.abaccotech.saloraglam",
+  "appName": "SALORA GLAM",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"

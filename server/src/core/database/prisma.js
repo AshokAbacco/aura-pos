@@ -3,17 +3,22 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { env } from "../../config/env.js";
 
 /**
- * Connection pool. Opening a connection to a hosted database (TLS + auth) costs several network
- * round trips, so connections are kept open for 5 minutes of idleness instead of node-postgres'
- * 10-second default; otherwise almost every page after a short pause paid that cost again.
+ * Connection pool.
+ * - Opening a connection to a hosted database (TLS + auth) costs several round trips, so idle
+ *   connections are kept for a minute instead of node-postgres' 10-second default.
+ * - Hosting networks silently drop connections that look idle for a few minutes. A query sent on such
+ *   a dead connection hangs for ~20–30 s before failing over (the "one random request takes 27 s"
+ *   symptom). TCP keep-alive probes every 10 s keep the connection visibly alive, and idle connections
+ *   are closed after 60 s, well before a network would drop them.
  */
 export const prisma = new PrismaClient({
   adapter: new PrismaPg({
     connectionString: env.DATABASE_URL,
     max: env.DB_POOL_MAX,
-    idleTimeoutMillis: 5 * 60_000,
+    idleTimeoutMillis: 60_000,
     connectionTimeoutMillis: 15_000,
     keepAlive: true,
+    keepAliveInitialDelayMillis: 10_000,
   }),
 });
 export { Prisma };

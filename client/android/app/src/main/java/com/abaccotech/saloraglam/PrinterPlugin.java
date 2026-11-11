@@ -1,4 +1,4 @@
-package com.abaccotech.aurapos;
+package com.abaccotech.saloraglam;
 
 import android.content.Context;
 import android.print.PrintAttributes;
@@ -22,7 +22,7 @@ public class PrinterPlugin extends Plugin {
 
     @PluginMethod
     public void print(PluginCall call) {
-        final String jobName = call.getString("name", "SALORA GLAM");
+        final String jobName = call.getString("name", "Aura POS");
         getActivity().runOnUiThread(() -> {
             try {
                 WebView webView = getBridge().getWebView();

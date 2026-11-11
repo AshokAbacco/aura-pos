@@ -1,4 +1,4 @@
-package com.abaccotech.aurapos;
+package com.abaccotech.saloraglam;
 
 import android.os.Bundle;
 
@@ -11,4 +11,4 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(PrinterPlugin.class);
         super.onCreate(savedInstanceState);
     }
-}   
+}

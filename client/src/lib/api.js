@@ -207,8 +207,15 @@ export function errorMessage(err) {
       err?.code === "ECONNABORTED" ||
       err?.message === "Network Error" ||
       [502, 503, 504].includes(err?.response?.status)
-    )
-      return "Cannot reach the server. Check your internet connection and try again.";
+    ) {
+      // In the app, name the address: a wrong VITE_API_BASE_URL in .env.android / .env.ios is the usual cause.
+      return isNative
+        ? `Cannot reach the server at ${API_BASE_URL}. Check the internet connection, or that this address is correct and open in the phone's browser (${API_BASE_URL.replace(
+            /\/api\/v1$/,
+            "",
+          )}/health).`
+        : "Cannot reach the server. Check your internet connection and try again.";
+    }
     return "Something went wrong. Please try again.";
   }
   if (e.details?.length && e.code === "VALIDATION_FAILED")
