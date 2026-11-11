@@ -232,16 +232,44 @@ export async function revokeAllForPrincipal(
  */
 export const SESSION_ONLY_COOKIE = "aura_rt_session";
 
+/**
+ * SameSite for the refresh cookie. With COOKIE_SAMESITE=auto (default):
+ * - website and API on the same host → Strict (the browser never sends it from other sites);
+ * - website on another host (Origin differs from the API host) → None + Secure, otherwise the browser
+ *   drops the cookie and every page refresh signs the user out.
+ * None is safe here because the auth endpoints also require the X-Requested-With header, which other
+ * sites can't send without passing the CORS allow-list.
+ */
+export function sameSiteFor(
+  req,
+  { mode = env.COOKIE_SAMESITE, secure = env.COOKIE_SECURE } = {},
+) {
+  if (mode !== "auto") return mode;
+  const origin = req?.get?.("origin");
+  if (!origin || !secure) return "strict";
+  let originHost;
+  try {
+    originHost = new URL(origin).hostname;
+  } catch {
+    return "strict";
+  }
+  const apiHost = (req.get("x-forwarded-host") ?? req.get("host") ?? "").split(
+    ":",
+  )[0];
+  return originHost === apiHost ? "strict" : "none";
+}
+const cookieBase = (res, path) => ({
+  httpOnly: true,
+  secure: env.COOKIE_SECURE,
+  sameSite: sameSiteFor(res.req),
+  path,
+});
+
 /** `persistent: false` → session-only cookie (cleared when the browser closes). */
 export function setRefreshCookie(res, name, token, { persistent = true } = {}) {
   const path =
     name === REFRESH_COOKIE ? "/api/v1/auth" : "/api/v1/platform/auth";
-  const base = {
-    httpOnly: true,
-    secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SAMESITE,
-    path,
-  };
+  const base = cookieBase(res, path);
   res.cookie(
     name,
     token,
@@ -257,12 +285,7 @@ export function setRefreshCookie(res, name, token, { persistent = true } = {}) {
 export function clearRefreshCookie(res, name) {
   const path =
     name === REFRESH_COOKIE ? "/api/v1/auth" : "/api/v1/platform/auth";
-  const opts = {
-    path,
-    httpOnly: true,
-    secure: env.COOKIE_SECURE,
-    sameSite: env.COOKIE_SAMESITE,
-  };
+  const opts = cookieBase(res, path);
   res.clearCookie(name, opts);
   if (name === REFRESH_COOKIE) res.clearCookie(SESSION_ONLY_COOKIE, opts);
 }

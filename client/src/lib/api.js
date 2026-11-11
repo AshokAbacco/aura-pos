@@ -37,11 +37,11 @@ export const api = axios.create({
 });
 
 /** True for "couldn't reach the server" (no response, timeout, gateway errors while the host starts). */
-// Only real network/HTTP failures count. A plain Error (e.g. "no saved session" on a fresh install)
+// Only real network/HTTP failures count (429 = rate limited: wait and retry, don't sign out). A plain Error (e.g. "no saved session" on a fresh install)
 // is not a connection problem and must send the user to the login screen.
 export const isTransient = (e) =>
   !!e?.isAxiosError &&
-  (!e.response || [502, 503, 504].includes(e.response.status));
+  (!e.response || [429, 502, 503, 504].includes(e.response.status));
 
 // Tell the shell when a request is slow, so it can say "server is waking up" instead of looking frozen.
 let pending = 0;

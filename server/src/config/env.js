@@ -38,7 +38,9 @@ const schema = z.object({
     .default(365),
   // 'strict' when the website and API share a site (recommended: same domain or one Render service).
   // 'none' only if the website and API are on different sites (e.g. two *.onrender.com services).
-  COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("strict"),
+  // auto: Strict when the website and API share an address, None (+Secure) when the website calls the
+  // API on another address (e.g. two *.onrender.com services), so refreshing the page keeps you signed in.
+  COOKIE_SAMESITE: z.enum(["auto", "strict", "lax", "none"]).default("auto"),
   COOKIE_SECURE: bool.default("false"),
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   RAZORPAY_KEY_ID: z.string().default(""),
