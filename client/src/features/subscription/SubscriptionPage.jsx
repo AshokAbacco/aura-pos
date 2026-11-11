@@ -1,22 +1,22 @@
-/** The salon's own Aura POS plan (not client memberships): status, renew/switch via Razorpay, history. */
-import { useState } from 'react';
-import { api, errorMessage } from '../../lib/api.js';
-import { useAuth } from '../../hooks/useAuth.js';
-import { PageHeader, ErrorNote, Skeleton } from '../../components/ui';
-import { useApi } from '../../hooks/useApi.js';
-import { useToast } from '../../contexts/ToastContext.jsx';
-import { ConfirmDialog } from '../../components/modals';
-import { payForPlan } from './utils/razorpayCheckout.js';
-import { CurrentPlanCard } from './components/CurrentPlanCard.jsx';
-import { PlanOptionCard } from './components/PlanOptionCard.jsx';
-import { PaymentHistory } from './components/PaymentHistory.jsx';
+/** The salon's own Salora Glam plan (not client memberships): status, renew/switch via Razorpay, history. */
+import { useState } from "react";
+import { api, errorMessage } from "../../lib/api.js";
+import { useAuth } from "../../hooks/useAuth.js";
+import { PageHeader, ErrorNote, Skeleton } from "../../components/ui";
+import { useApi } from "../../hooks/useApi.js";
+import { useToast } from "../../contexts/ToastContext.jsx";
+import { ConfirmDialog } from "../../components/modals";
+import { payForPlan } from "./utils/razorpayCheckout.js";
+import { CurrentPlanCard } from "./components/CurrentPlanCard.jsx";
+import { PlanOptionCard } from "./components/PlanOptionCard.jsx";
+import { PaymentHistory } from "./components/PaymentHistory.jsx";
 
 export default function SubscriptionPage() {
   const { me, can, reload } = useAuth();
   const toast = useToast();
-  const status = useApi('/billing/status');
-  const plans = useApi('/public/plans');
-  const payments = useApi(can('billing.manage') ? '/billing/payments' : null);
+  const status = useApi("/billing/status");
+  const plans = useApi("/public/plans");
+  const payments = useApi(can("billing.manage") ? "/billing/payments" : null);
   const [paying, setPaying] = useState(null);
   const st = status.data;
   const e = st?.entitlement;
@@ -25,16 +25,26 @@ export default function SubscriptionPage() {
     setPaying(plan.id);
     try {
       await payForPlan({ plan, me });
-      toast('Payment verified — your plan is active');
+      toast("Payment verified — your plan is active");
       await Promise.all([reload(), status.reload(), payments.reload()]);
-    } catch (err) { toast(err.response ? errorMessage(err) : err.message, 'error'); }
-    finally { setPaying(null); }
+    } catch (err) {
+      toast(err.response ? errorMessage(err) : err.message, "error");
+    } finally {
+      setPaying(null);
+    }
   }
 
   const [confirmCancel, setConfirmCancel] = useState(false);
   const cancel = async () => {
-    try { await api.post('/billing/cancel'); toast('Your plan will end at the close of this period'); setConfirmCancel(false); status.reload(); reload(); }
-    catch (err) { toast(errorMessage(err), 'error'); }
+    try {
+      await api.post("/billing/cancel");
+      toast("Your plan will end at the close of this period");
+      setConfirmCancel(false);
+      status.reload();
+      reload();
+    } catch (err) {
+      toast(errorMessage(err), "error");
+    }
   };
 
   return (

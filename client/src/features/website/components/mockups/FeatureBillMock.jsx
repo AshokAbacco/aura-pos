@@ -1,10 +1,25 @@
-import { LuSearch, LuUserRound, LuScissors, LuQrCode } from 'react-icons/lu';
-import { Avatar } from './MockParts.jsx';
+import { LuSearch, LuUserRound, LuScissors, LuQrCode } from "react-icons/lu";
+import { Avatar } from "./MockParts.jsx";
 
-const CATALOG = [['Hair Cut', 'Cuts', '₹600'], ['Hair Spa', 'Hair', '₹1,500'], ['Facial', 'Skin', '₹1,200'], ['D-Tan', 'Skin', '₹1,000'], ['Shampoo', 'Retail', '₹300']];
-const CART = [['Hair Spa', '₹1,500'], ['Facial', '₹1,200'], ['Shampoo', '₹300']];
+const CATALOG = [
+  ["Hair Cut", "Cuts", "₹600"],
+  ["Hair Spa", "Hair", "₹1,500"],
+  ["Facial", "Skin", "₹1,200"],
+  ["D-Tan", "Skin", "₹1,000"],
+  ["Shampoo", "Retail", "₹300"],
+];
+const CART = [
+  ["Hair Spa", "₹1,500"],
+  ["Facial", "₹1,200"],
+  ["Shampoo", "₹300"],
+];
 // ₹3,000 − 10% = ₹2,700; CGST 9% ₹243 + SGST 9% ₹243 → ₹3,186
-const TOTALS = [['Subtotal', '₹3,000'], ['Discount', '−₹300'], ['CGST (9%)', '₹243'], ['SGST (9%)', '₹243']];
+const TOTALS = [
+  ["Subtotal", "₹3,000"],
+  ["Discount", "−₹300"],
+  ["CGST (9%)", "₹243"],
+  ["SGST (9%)", "₹243"],
+];
 
 /** Billing counter + printed receipt (features page, section 01). */
 export function FeatureBillMock({ avatars }) {

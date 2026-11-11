@@ -14,4 +14,7 @@ router.patch("/profile", ...manage, c.updateProfile);
 router.post("/branches", ...manage, c.createBranch);
 router.patch("/branches/:id", ...manage, c.updateBranch);
 router.post("/branches/:id/resources", ...manage, c.addResource);
+router.post("/branches/:id/resources/bulk", ...manage, c.addResourcesBulk); // "add 4 chairs to First floor"
+router.put("/branches/:id/resources/order", ...manage, c.reorderResources); // one floor's order, one transaction
+router.post("/branches/:id/floors/rename", ...manage, c.renameFloor);
 router.patch("/resources/:id", ...manage, c.updateResource); // rename, move to another floor, reorder, deactivate

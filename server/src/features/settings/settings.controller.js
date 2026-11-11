@@ -6,6 +6,9 @@ import {
   branchUpdateSchema,
   resourceSchema,
   resourceUpdateSchema,
+  resourceBulkSchema,
+  reorderSchema,
+  floorRenameSchema,
 } from "./settings.validation.js";
 
 export async function get(req, res) {
@@ -60,6 +63,38 @@ export async function updateResource(req, res) {
         req.params.id,
         parse(resourceUpdateSchema, req.body),
       ),
+    ),
+  );
+}
+export async function addResourcesBulk(req, res) {
+  created(
+    res,
+    toJSONSafe(
+      await settings.addResourcesBulk(
+        req.ctx,
+        req.params.id,
+        parse(resourceBulkSchema, req.body),
+      ),
+    ),
+  );
+}
+export async function reorderResources(req, res) {
+  ok(
+    res,
+    await settings.reorderResources(
+      req.ctx,
+      req.params.id,
+      parse(reorderSchema, req.body),
+    ),
+  );
+}
+export async function renameFloor(req, res) {
+  ok(
+    res,
+    await settings.renameFloor(
+      req.ctx,
+      req.params.id,
+      parse(floorRenameSchema, req.body),
     ),
   );
 }

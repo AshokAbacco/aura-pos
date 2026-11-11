@@ -51,9 +51,9 @@ export function FeaturesHero() {
           </ul>
         </div>
         <div className="relative px-6 py-8 fade-up [animation-delay:.15s]">
-          <TabletFrame className="mx-auto max-w-[520px] md:rotate-[-2deg]">
+          {/* <TabletFrame className="mx-auto max-w-[520px] md:rotate-[-2deg]">
             <DashboardMock stats />
-          </TabletFrame>
+          </TabletFrame> */}
           {CHIPS.map(([icon, label, pos], i) => (
             <div
               key={label}

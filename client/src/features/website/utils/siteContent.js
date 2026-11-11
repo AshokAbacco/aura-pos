@@ -4,15 +4,18 @@
  */
 
 // ───────────── Brand, company and contact ─────────────
+import { BRAND as CORE } from "../../../config/brand.js";
+
 export const BRAND = {
-  name: "SALORA GLAM",
+  ...CORE,
   tagline: "Billing, appointments and accounts for salons and spas in India.",
 };
 
 export const COMPANY = {
   name: "Abacco Technology",
-  website: "https://abaccotech.com", // ← confirm the company website address
-  email: "info@abaccotech.com",
+  website: "https://www.abaccotech.com/",
+  logo: "/abacco.png", // client/public/abacco.png (square or round logo, at least 96×96)
+  email: "support@saloraglam.com",
   phone: "+91 99724 52044",
   phoneHref: "+919972452044",
   hours: "Mon - Sat, 9:30 AM - 6:30 PM",
@@ -40,6 +43,34 @@ export const NAV_LINKS = [
   ["/products", "Products"],
   ["/contact", "Contact"],
 ];
+/** Footer link columns. */
+export const FOOTER_GROUPS = [
+  [
+    "Product",
+    [
+      ["/features", "Features"],
+      ["/pricing", "Pricing"],
+      ["/products", "Our products"],
+      ["/register", "Start free trial"],
+    ],
+  ],
+  [
+    "Company",
+    [
+      ["/about", "About us"],
+      ["/contact", "Contact"],
+      ["/login", "Sign in"],
+    ],
+  ],
+  [
+    "Legal",
+    [
+      ["/terms", "Terms & Conditions"],
+      ["/privacy", "Privacy Policy"],
+      ["/refunds", "Subscription & Refunds"],
+    ],
+  ],
+];
 export const FOOTER_LINKS = [
   ["/features", "Features"],
   ["/pricing", "Pricing"],
@@ -48,7 +79,7 @@ export const FOOTER_LINKS = [
   ["/contact", "Contact"],
   ["/privacy", "Privacy"],
   ["/terms", "Terms"],
-  ["/refunds", "Refunds and cancellation"],
+  ["/refunds", "Subscription & refunds"],
 ];
 
 // ───────────── Home ─────────────

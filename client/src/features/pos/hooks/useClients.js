@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { api } from "../../../lib/api.js";
+import { useRefreshListener } from "../../../hooks/useApi.js";
 
 /** Client list for the pickers (with membership and wallet), reloadable after adding a client. */
 export function useClients() {
@@ -18,5 +19,6 @@ export function useClients() {
   useEffect(() => {
     reload();
   }, [reload]);
+  useRefreshListener(reload);
   return { clients, reload };
 }

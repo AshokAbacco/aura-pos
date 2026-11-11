@@ -5,6 +5,7 @@
  * the server answers 409 and we reload the latest version.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRefreshListener } from "../../../hooks/useApi.js";
 import { api, errorMessage } from "../../../lib/api.js";
 import { emptyCart } from "../utils/posDraft.js";
 
@@ -135,6 +136,12 @@ export function useChairTicket(chairId, { toast } = {}) {
       ? { chairTicketId: ticketId.current, chairTicketVersion: version.current }
       : {};
   }, [flush]);
+
+  // Pull to refresh: save what is typed first, then fetch the latest ticket.
+  useRefreshListener(async () => {
+    await flush();
+    await load();
+  });
 
   return {
     chair,

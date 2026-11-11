@@ -1,15 +1,23 @@
-import { useState } from 'react';
-import { errorMessage } from '../../../lib/api.js';
-import { Button } from '../../../components/ui';
-import { Field } from '../../../components/forms';
+import { useState } from "react";
+import { errorMessage } from "../../../lib/api.js";
+import { Button } from "../../../components/ui";
+import { Field } from "../../../components/forms";
 
 export function AdminLogin({ onLogin }) {
-  const [f, setF] = useState({ email: '', password: '' });
-  const [err, setErr] = useState('');
+  const [f, setF] = useState({ email: "", password: "" });
+  const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
   const submit = async (e) => {
-    e.preventDefault(); setBusy(true); setErr('');
-    try { await onLogin(f.email, f.password); } catch (x) { setErr(errorMessage(x)); } finally { setBusy(false); }
+    e.preventDefault();
+    setBusy(true);
+    setErr("");
+    try {
+      await onLogin(f.email, f.password);
+    } catch (x) {
+      setErr(errorMessage(x));
+    } finally {
+      setBusy(false);
+    }
   };
   return (
     <main className="grid min-h-screen place-items-center bg-stone-900 p-4">

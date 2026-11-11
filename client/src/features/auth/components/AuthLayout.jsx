@@ -112,13 +112,17 @@ export function AuthLayout({
             <div className="site-card mx-auto w-full max-w-lg p-7 md:p-9">
               {cardTop}
               <h1
-                className={`font-display text-[2.1rem] leading-tight text-ink ${centered ? "text-center" : ""}`}
+                className={`font-display text-[2.1rem] leading-tight text-ink ${
+                  centered ? "text-center" : ""
+                }`}
               >
                 {title}
               </h1>
               {subtitle && (
                 <p
-                  className={`mt-1.5 text-[15px] text-stone-600 ${centered ? "text-center" : ""}`}
+                  className={`mt-1.5 text-[15px] text-stone-600 ${
+                    centered ? "text-center" : ""
+                  }`}
                 >
                   {subtitle}
                 </p>

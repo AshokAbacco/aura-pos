@@ -1,5 +1,6 @@
 import { parse, ok, created } from "../../core/utils/http.js";
 import { AppError, unauthorized } from "../../core/errors/errors.js";
+import { env } from "../../config/env.js";
 import { prisma } from "../../core/database/prisma.js";
 import { entitlementSummary } from "../subscription/subscription.summary.js";
 import {
@@ -59,12 +60,18 @@ const tokens = (req, res, accessToken) => ({
   ...(isNative(req) ? { refreshToken: res.locals.refreshToken } : {}),
 });
 
+const ttlFor = (req) =>
+  isNative(req)
+    ? env.REFRESH_TOKEN_TTL_DAYS_NATIVE
+    : env.REFRESH_TOKEN_TTL_DAYS;
+
 async function startSession(req, res, user, { remember = true } = {}) {
   const { refreshToken, accessToken } = await createSession({
     principalType: "user",
     principalId: user.id,
     tenantId: user.tenantId,
     req,
+    ttlDays: ttlFor(req),
   });
   issueRefresh(req, res, refreshToken, { persistent: remember });
   return accessToken;
@@ -105,6 +112,7 @@ export async function refresh(req, res) {
       incomingRefreshToken(req),
       "user",
       req,
+      { ttlDays: ttlFor(req) },
     );
     const user = await prisma.user.findUnique({ where: { id: principalId } });
     if (!user?.isActive) throw unauthorized("Account disabled");

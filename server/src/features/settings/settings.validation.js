@@ -82,3 +82,17 @@ export const resourceUpdateSchema = resourceSchema
   .partial()
   .extend({ isActive: z.boolean().optional() })
   .refine((v) => Object.keys(v).length > 0, "Nothing to update");
+
+export const resourceBulkSchema = z.object({
+  floor: z.string().trim().min(1).max(40),
+  kind: z.enum(["CHAIR", "ROOM", "STATION"]).default("CHAIR"),
+  count: z.coerce.number().int().min(1).max(30),
+  prefix: z.string().trim().min(1).max(40).default("Chair"),
+});
+export const reorderSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(200),
+});
+export const floorRenameSchema = z.object({
+  from: z.string().trim().min(1).max(40),
+  to: z.string().trim().min(1).max(40),
+});

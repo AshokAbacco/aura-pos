@@ -36,6 +36,7 @@ import serviceHairSpa from "../../../assets/images/site/service-hair-spa.svg";
 import serviceHaircut from "../../../assets/images/site/service-haircut.svg";
 import serviceMassage from "../../../assets/images/site/service-massage.svg";
 import servicePedicure from "../../../assets/images/site/service-pedicure.svg";
+import legalHero from "../../../assets/images/site/legal-hero.png";
 
 export const IMG = {
   authLoginSalon,
@@ -71,4 +72,5 @@ export const IMG = {
   serviceHaircut,
   serviceMassage,
   servicePedicure,
+  legalHero,
 };

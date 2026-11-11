@@ -1,14 +1,17 @@
 /** Features: hero, module icons, seven numbered feature sections with illustrated screens, call to action. */
-import { usePageMeta } from './hooks/usePageMeta.js';
-import { useReveal } from './hooks/useReveal.js';
-import { CtaBanner, IconFeatureRow, SectionTitle } from './components/common';
-import { FeaturesHero } from './components/features/FeaturesHero.jsx';
-import { FeatureSection } from './components/features/FeatureSection.jsx';
-import { FEATURE_ICONS, FEATURE_SECTIONS } from './utils/siteContent.js';
-import { IMG } from './utils/siteImages.js';
+import { usePageMeta } from "./hooks/usePageMeta.js";
+import { useReveal } from "./hooks/useReveal.js";
+import { CtaBanner, IconFeatureRow, SectionTitle } from "./components/common";
+import { FeaturesHero } from "./components/features/FeaturesHero.jsx";
+import { FeatureSection } from "./components/features/FeatureSection.jsx";
+import { FEATURE_ICONS, FEATURE_SECTIONS } from "./utils/siteContent.js";
+import { IMG } from "./utils/siteImages.js";
 
 export default function FeaturesPage() {
-  usePageMeta('Features', 'POS billing, appointments, CRM, memberships, inventory, staff commission and profit & loss for salons and spas.');
+  usePageMeta(
+    "Features",
+    "POS billing, appointments, CRM, memberships, inventory, staff commission and profit & loss for salons and spas.",
+  );
   const ref = useReveal();
   return (
     <div ref={ref}>

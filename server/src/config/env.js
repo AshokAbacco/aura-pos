@@ -13,6 +13,7 @@ const schema = z.object({
     .default("development"),
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().url(),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
   CLIENT_ORIGIN: z.string().url().default("http://localhost:5173"), // React app origin (CORS allow-list, links in emails)
   // More origins allowed to call the API, comma separated. The Android app (Capacitor) is https://localhost.
   EXTRA_CORS_ORIGINS: z
@@ -28,6 +29,16 @@ const schema = z.object({
   JWT_ACCESS_SECRET: z.string().min(32),
   ACCESS_TOKEN_TTL_SEC: z.coerce.number().int().positive().default(900),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
+  // The Android/iOS app stays signed in until the user signs out, as long as it is opened at least once
+  // in this many days (the expiry slides forward on every refresh).
+  REFRESH_TOKEN_TTL_DAYS_NATIVE: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(365),
+  // 'strict' when the website and API share a site (recommended: same domain or one Render service).
+  // 'none' only if the website and API are on different sites (e.g. two *.onrender.com services).
+  COOKIE_SAMESITE: z.enum(["strict", "lax", "none"]).default("strict"),
   COOKIE_SECURE: bool.default("false"),
   TRUST_PROXY: z.coerce.number().int().min(0).default(0),
   RAZORPAY_KEY_ID: z.string().default(""),
@@ -60,6 +71,8 @@ function load() {
   if (env.NODE_ENV === "production") {
     const problems = [];
     if (!env.COOKIE_SECURE) problems.push("COOKIE_SECURE must be true");
+    if (env.COOKIE_SAMESITE === "none" && !env.COOKIE_SECURE)
+      problems.push("COOKIE_SAMESITE=none requires COOKIE_SECURE=true");
     if (/change-me|dev|test/i.test(env.JWT_ACCESS_SECRET))
       problems.push("JWT_ACCESS_SECRET looks like a development value");
     for (const k of [

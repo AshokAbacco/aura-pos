@@ -4,11 +4,13 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import {
   api,
   endSession,
+  isTransient,
   refreshSession,
   setAccessToken,
   setSessionLostHandler,
@@ -18,7 +20,9 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [me, setMe] = useState(null);
-  const [status, setStatus] = useState("loading"); // loading | authed | anon
+  // loading | authed | anon | offline (signed in, but the server can't be reached yet: keep the session and retry)
+  const [status, setStatus] = useState("loading");
+  const retryTimer = useRef(null);
 
   const loadMe = useCallback(async () => {
     const r = await api.get("/auth/me");
@@ -29,20 +33,50 @@ export function AuthProvider({ children }) {
     return r.data.data;
   }, []);
 
+  /** Restore the session (HttpOnly cookie in the browser, saved token in the app). */
+  const restore = useCallback(
+    async (attempt = 0) => {
+      clearTimeout(retryTimer.current);
+      try {
+        await refreshSession();
+        await loadMe();
+      } catch (e) {
+        if (!isTransient(e)) {
+          setStatus("anon");
+          return;
+        } // the server said no: sign in again
+        // No connection or the server is starting: stay signed in and try again (5 s, 10 s … up to 30 s).
+        setStatus("offline");
+        retryTimer.current = setTimeout(
+          () => restore(attempt + 1),
+          Math.min(30000, 5000 * (attempt + 1)),
+        );
+      }
+    },
+    [loadMe],
+  );
+
   useEffect(() => {
     setSessionLostHandler(() => {
       setAccessToken(null);
       setMe(null);
       setStatus("anon");
     });
-    // Restore a session on load (HttpOnly cookie in the browser, saved token in the app).
-    refreshSession()
-      .then(loadMe)
-      .catch(() => setStatus("anon"));
+    restore();
     const onEnt = () => loadMe().catch(() => {});
+    const onOnline = () =>
+      setStatus((s) => {
+        if (s === "offline") restore();
+        return s;
+      });
     window.addEventListener("aura:entitlement", onEnt);
-    return () => window.removeEventListener("aura:entitlement", onEnt);
-  }, [loadMe]);
+    window.addEventListener("online", onOnline);
+    return () => {
+      window.removeEventListener("aura:entitlement", onEnt);
+      window.removeEventListener("online", onOnline);
+      clearTimeout(retryTimer.current);
+    };
+  }, [loadMe, restore]);
 
   const login = useCallback(
     async (email, password, remember = true) => {
@@ -76,10 +110,11 @@ export function AuthProvider({ children }) {
       logout,
       adoptToken,
       reload: loadMe,
+      retry: () => restore(),
       can: (p) => !!me?.permissions.includes(p),
       writable: !!me?.entitlement.writable,
     }),
-    [me, status, login, logout, adoptToken, loadMe],
+    [me, status, login, logout, adoptToken, loadMe, restore],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -68,7 +68,7 @@ export default function LoginPage() {
         title: [
           "Welcome back",
           <>
-            to <span className="text-mauve">SALORA GLAM</span>
+            to <span className="text-mauve">Salora Glam</span>
           </>,
         ],
       }}
@@ -76,7 +76,7 @@ export default function LoginPage() {
       subtitle="To your salon’s billing counter."
       footer={
         <>
-          New to SALORA GLAM?{" "}
+          New to Salora Glam?{" "}
           <Link
             className="font-semibold text-mauve underline underline-offset-2"
             to="/register"

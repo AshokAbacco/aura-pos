@@ -1,5 +1,5 @@
 /**
- * Everything specific to the Android app (Capacitor) lives here, so the rest of the code
+ * Everything specific to the phone apps (Capacitor: Android and iOS) lives here, so the rest of the code
  * only asks `isNative` and calls the helpers below. In a normal browser every helper falls
  * back to the web behaviour and no native plugin is loaded.
  */
@@ -9,7 +9,8 @@ export const isNative = Capacitor.isNativePlatform();
 export const platform = Capacitor.getPlatform(); // 'web' | 'android' | 'ios'
 
 // ───────────── Refresh token (the app can't use the HttpOnly cookie) ─────────────
-// Stored in the app's private storage (Android SharedPreferences, readable only by this app).
+// Stored in the app's private storage (Android SharedPreferences / iOS UserDefaults, readable only by this app).
+// It stays until the user signs out (or the session is revoked), so the app keeps you signed in like a social app.
 const RT_KEY = "aura.refreshToken";
 let rtCache;
 
@@ -29,8 +30,8 @@ export async function setRefreshToken(token) {
 }
 
 // ───────────── Printing (receipts, P&L) ─────────────
-// Android's WebView ignores window.print(); the app has a tiny native plugin (PrinterPlugin.java)
-// that hands the current page to Android's print service (PDF, Wi-Fi/Bluetooth printers).
+// The app WebViews ignore window.print(); each app has a tiny native plugin that hands the current
+// page to the system print service: PrinterPlugin.java (Android) and PrinterPlugin.swift (iOS, AirPrint / PDF).
 const Printer = registerPlugin("Printer");
 export async function printPage(jobName = "Salora Glam") {
   if (isNative) {
@@ -71,10 +72,14 @@ export async function saveFile(blob, filename) {
 }
 
 // ───────────── App shell: back button, status bar, splash ─────────────
-/** Call once at start-up. Android back button goes back in the app, and leaves it from the first screen. */
+/**
+ * Call once at start-up. Android back button goes back in the app, and leaves it from the first screen.
+ * iOS has no back button: the top bar shows one (layouts/app/components/TopBar.jsx) and the
+ * left-edge swipe works too (ios/App/App/MainViewController.swift).
+ */
 export async function initNativeShell() {
   if (!isNative) return;
-  document.documentElement.classList.add("is-native");
+  document.documentElement.classList.add("is-native", `is-${platform}`);
   const [{ App }, { StatusBar, Style }, { SplashScreen }] = await Promise.all([
     import("@capacitor/app"),
     import("@capacitor/status-bar"),

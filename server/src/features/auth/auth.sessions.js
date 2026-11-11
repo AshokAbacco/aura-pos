@@ -60,7 +60,7 @@ export function verifyAccessToken(token, audience) {
 }
 
 export async function createSession(
-  { principalType, principalId, tenantId, req, familyId },
+  { principalType, principalId, tenantId, req, familyId, ttlDays },
   db = prisma,
 ) {
   const refreshToken = randomToken();
@@ -71,7 +71,9 @@ export async function createSession(
       tenantId: tenantId ?? null,
       tokenHash: sha256(refreshToken),
       familyId: familyId ?? crypto.randomUUID(),
-      expiresAt: new Date(Date.now() + env.REFRESH_TOKEN_TTL_DAYS * 86400000),
+      expiresAt: new Date(
+        Date.now() + (ttlDays ?? env.REFRESH_TOKEN_TTL_DAYS) * 86400000,
+      ), // slides forward on every refresh
       userAgent: req?.get?.("user-agent")?.slice(0, 255) ?? null,
       ipHash: ipHash(req?.ip),
     },
@@ -88,50 +90,110 @@ export async function createSession(
   };
 }
 
-/** Rotate a refresh token. Returns new tokens or throws 401 (revoking the family on reuse). */
-export async function rotateRefreshToken(presented, principalType, req) {
+/**
+ * Rotate a refresh token. Returns new tokens or throws 401 (revoking the family on reuse).
+ *
+ * Grace for lost responses: if the presented token was already rotated but its replacement has
+ * never been used, the client most likely never received the replacement (the phone lost signal,
+ * the app was closed mid-request, two tabs refreshed at the same moment). Instead of treating that
+ * as theft and signing the user out, the unused replacement is cancelled and a fresh token issued.
+ * Presenting a token whose replacement HAS been used is still treated as theft.
+ */
+export async function rotateRefreshToken(
+  presented,
+  principalType,
+  req,
+  { ttlDays, retried = false } = {},
+) {
   if (!presented) throw unauthorized("No session");
   const current = await prisma.session.findUnique({
     where: { tokenHash: sha256(presented) },
   });
   if (!current || current.principalType !== principalType)
     throw unauthorized("Session not found");
-
-  if (current.revokedAt || current.replacedById) {
-    // Reuse of a rotated/revoked token: assume theft, kill the whole family.
-    await revokeFamily(current.familyId, "REFRESH_REUSE_DETECTED");
-    throw unauthorized("Session revoked");
-  }
   if (current.expiresAt < new Date()) throw unauthorized("Session expired");
 
-  return prisma.$transaction(async (tx) => {
-    // Conditional update guards against two concurrent refreshes with the same token.
-    const next = await createSession(
-      {
-        principalType,
+  if (current.revokedAt || current.replacedById) {
+    const successor =
+      current.revokeReason === "ROTATED" && current.replacedById
+        ? await prisma.session.findUnique({
+            where: { id: current.replacedById },
+          })
+        : null;
+    const unused = successor && !successor.revokedAt && !successor.replacedById;
+    if (!unused) {
+      // Reuse of a rotated/revoked token whose successor was used: assume theft, kill the whole family.
+      await revokeFamily(current.familyId, "REFRESH_REUSE_DETECTED");
+      throw unauthorized("Session revoked");
+    }
+    return prisma.$transaction(async (tx) => {
+      const cancelled = await tx.session.updateMany({
+        where: { id: successor.id, revokedAt: null, replacedById: null },
+        data: { revokedAt: new Date(), revokeReason: "SUPERSEDED" },
+      });
+      if (cancelled.count !== 1) throw unauthorized("Session already used");
+      const next = await createSession(
+        {
+          principalType,
+          principalId: current.principalId,
+          tenantId: current.tenantId,
+          req,
+          familyId: current.familyId,
+          ttlDays,
+        },
+        tx,
+      );
+      await tx.session.update({
+        where: { id: current.id },
+        data: { replacedById: next.session.id, lastUsedAt: new Date() },
+      });
+      return {
+        ...next,
         principalId: current.principalId,
         tenantId: current.tenantId,
-        req,
-        familyId: current.familyId,
-      },
-      tx,
-    );
-    const claimed = await tx.session.updateMany({
-      where: { id: current.id, replacedById: null, revokedAt: null },
-      data: {
-        replacedById: next.session.id,
-        revokedAt: new Date(),
-        revokeReason: "ROTATED",
-        lastUsedAt: new Date(),
-      },
+      };
     });
-    if (claimed.count !== 1) throw unauthorized("Session already used");
-    return {
-      ...next,
-      principalId: current.principalId,
-      tenantId: current.tenantId,
-    };
-  });
+  }
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Conditional update guards against two concurrent refreshes with the same token.
+      const next = await createSession(
+        {
+          principalType,
+          principalId: current.principalId,
+          tenantId: current.tenantId,
+          req,
+          familyId: current.familyId,
+          ttlDays,
+        },
+        tx,
+      );
+      const claimed = await tx.session.updateMany({
+        where: { id: current.id, replacedById: null, revokedAt: null },
+        data: {
+          replacedById: next.session.id,
+          revokedAt: new Date(),
+          revokeReason: "ROTATED",
+          lastUsedAt: new Date(),
+        },
+      });
+      if (claimed.count !== 1) throw unauthorized("Session already used");
+      return {
+        ...next,
+        principalId: current.principalId,
+        tenantId: current.tenantId,
+      };
+    });
+  } catch (e) {
+    // Lost a race with a simultaneous refresh of the same token: take the grace path once.
+    if (!retried && e?.status === 401)
+      return rotateRefreshToken(presented, principalType, req, {
+        ttlDays,
+        retried: true,
+      });
+    throw e;
+  }
 }
 
 // "Live" = not revoked, or merely rotated (its short-lived access token may still be in use).
@@ -177,7 +239,7 @@ export function setRefreshCookie(res, name, token, { persistent = true } = {}) {
   const base = {
     httpOnly: true,
     secure: env.COOKIE_SECURE,
-    sameSite: "strict",
+    sameSite: env.COOKIE_SAMESITE,
     path,
   };
   res.cookie(
@@ -195,6 +257,12 @@ export function setRefreshCookie(res, name, token, { persistent = true } = {}) {
 export function clearRefreshCookie(res, name) {
   const path =
     name === REFRESH_COOKIE ? "/api/v1/auth" : "/api/v1/platform/auth";
-  res.clearCookie(name, { path });
-  if (name === REFRESH_COOKIE) res.clearCookie(SESSION_ONLY_COOKIE, { path });
+  const opts = {
+    path,
+    httpOnly: true,
+    secure: env.COOKIE_SECURE,
+    sameSite: env.COOKIE_SAMESITE,
+  };
+  res.clearCookie(name, opts);
+  if (name === REFRESH_COOKIE) res.clearCookie(SESSION_ONLY_COOKIE, opts);
 }

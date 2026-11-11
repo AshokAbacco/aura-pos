@@ -10,7 +10,7 @@ import { api, errorMessage } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
 import { money } from "../../utils/format.js";
 import { Button } from "../../components/ui";
-import { useApi } from "../../hooks/useApi.js";
+import { useApi, useRefreshListener } from "../../hooks/useApi.js";
 import { useToast } from "../../contexts/ToastContext.jsx";
 import { ReceiptModal } from "../../components/receipt/Receipt.jsx";
 import { NewClientModal } from "../clients";
@@ -45,6 +45,7 @@ export default function QuickSalePage() {
   useEffect(() => {
     loadClients();
   }, [loadClients]);
+  useRefreshListener(loadClients);
 
   const pos = usePosCart({
     toast,
@@ -64,8 +65,8 @@ export default function QuickSalePage() {
       offer: customer?.activeMembership
         ? "MEMBERSHIP"
         : cart.offer === "MEMBERSHIP"
-          ? "NONE"
-          : cart.offer,
+        ? "NONE"
+        : cart.offer,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.id, customer?.activeMembership]);
@@ -114,7 +115,10 @@ export default function QuickSalePage() {
   const park = () =>
     pos.park(
       customer?.name ??
-        `Cart ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`,
+        `Cart ${new Date().toLocaleTimeString("en-IN", {
+          hour: "numeric",
+          minute: "2-digit",
+        })}`,
     );
 
   const cartPanel = (

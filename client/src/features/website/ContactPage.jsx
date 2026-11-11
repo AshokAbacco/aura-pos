@@ -19,8 +19,12 @@ import {
 } from "./utils/siteContent.js";
 import { IMG } from "./utils/siteImages.js";
 
-const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(COMPANY.mapQuery)}`;
-const mapsEmbed = `https://www.google.com/maps?q=${encodeURIComponent(COMPANY.mapQuery)}&output=embed`;
+const mapsLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+  COMPANY.mapQuery,
+)}`;
+const mapsEmbed = `https://www.google.com/maps?q=${encodeURIComponent(
+  COMPANY.mapQuery,
+)}&output=embed`;
 
 export default function ContactPage() {
   usePageMeta(
@@ -189,7 +193,8 @@ export default function ContactPage() {
             Frequently Asked Questions
           </h2>
           <p className="mb-5 mt-2 text-sm text-stone-600">
-            Quick answers to common questions about Salora Glam and our services.
+            Quick answers to common questions about Salora Glam and our
+            services.
           </p>
           <FaqAccordion items={CONTACT_FAQ} defaultOpen={-1} />
         </div>

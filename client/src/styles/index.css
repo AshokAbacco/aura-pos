@@ -34,6 +34,46 @@ body,
   height: 100%;
 }
 
+/* iPhone notch / home indicator and Android cut-outs (needs viewport-fit=cover in index.html). */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* In the app: no grey flash on tap, no text-selection callouts on buttons, no rubber-band on the page itself. */
+.is-native body {
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+.is-native button,
+.is-native a {
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* iOS zooms into inputs with text smaller than 16px; keep forms at 16px on phones. */
+@media (max-width: 640px) {
+
+  .is-native input,
+  .is-native select,
+  .is-native textarea {
+    font-size: 16px;
+  }
+}
+
 body {
   @apply bg-stone-100 text-stone-900 font-sans antialiased;
 }
@@ -330,4 +370,52 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+}
+
+/* Footer: spinning gradient ring around the developer logo */
+@keyframes ring-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ring-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(123 40 67 / .25);
+  }
+
+  50% {
+    box-shadow: 0 0 0 6px rgb(123 40 67 / 0);
+  }
+}
+
+.logo-ring {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 9999px;
+  animation: ring-glow 2.4s ease-in-out infinite;
+}
+
+.logo-ring::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, #7b2843, #c99a45, #f7e9e6, #7b2843);
+  animation: ring-spin 3s linear infinite;
+}
+
+.logo-ring>* {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .logo-ring,
+  .logo-ring::before {
+    animation: none;
+  }
 }

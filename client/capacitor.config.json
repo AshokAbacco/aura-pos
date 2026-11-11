@@ -1,6 +1,6 @@
 {
-  "appId": "com.abaccotech.saloraglam",
-  "appName": "SALORA GLAM",
+  "appId": "com.abaccotech.aurapos",
+  "appName": "Salora Glam",
   "webDir": "dist",
   "server": {
     "androidScheme": "https"
@@ -12,7 +12,19 @@
     "SplashScreen": {
       "launchAutoHide": false,
       "backgroundColor": "#fbf5f2",
-      "showSpinner": false
+      "showSpinner": false,
+      "launchShowDuration": 0
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "LIGHT",
+      "backgroundColor": "#ffffff"
     }
+  },
+  "ios": {
+    "contentInset": "never",
+    "scheme": "Salora Glam",
+    "backgroundColor": "#fbf5f2",
+    "limitsNavigationsToAppBoundDomains": false
   }
 }

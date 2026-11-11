@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../../../lib/api.js";
+import { useRefreshListener } from "../../../hooks/useApi.js";
 
 /**
  * The floor plan: chairs grouped by floor with their open tickets.
@@ -40,5 +41,6 @@ export function useFloor() {
       window.removeEventListener("focus", onFocus);
     };
   }, [load]);
+  useRefreshListener(load);
   return { ...state, reload: load };
 }

@@ -1,5 +1,5 @@
-import { FaqAccordion, LeafSprig } from '../common';
-import { FAQ } from '../../utils/siteContent.js';
+import { FaqAccordion, LeafSprig } from "../common";
+import { FAQ } from "../../utils/siteContent.js";
 
 export function HomeFaq() {
   return (

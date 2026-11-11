@@ -1,4 +1,4 @@
-import { SetPasswordForm } from './components/SetPasswordForm.jsx';
+import { SetPasswordForm } from "./components/SetPasswordForm.jsx";
 
 export default function AcceptInvitePage() {
   return (

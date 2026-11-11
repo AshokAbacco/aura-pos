@@ -11,6 +11,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import express from "express";
+import compression from "compression";
 import helmet from "helmet";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -55,6 +56,7 @@ const CLIENT_DIST = path.resolve(
 
 export function createApp() {
   const app = express();
+  app.use(compression()); // gzip JSON and the website files (smaller downloads on mobile data)
   app.disable("x-powered-by");
   if (env.TRUST_PROXY) app.set("trust proxy", env.TRUST_PROXY);
 
@@ -138,7 +140,16 @@ export function createApp() {
 
   // Production: serve the built React client from the same origin (single process, single port).
   if (env.SERVE_CLIENT && fs.existsSync(path.join(CLIENT_DIST, "index.html"))) {
-    app.use(express.static(CLIENT_DIST, { index: false, maxAge: "1h" }));
+    // Built files in /assets have a content hash in their name, so browsers may keep them for a year;
+    // everything else (index.html) is re-checked so a new deploy shows up immediately.
+    app.use(
+      "/assets",
+      express.static(path.join(CLIENT_DIST, "assets"), {
+        immutable: true,
+        maxAge: "365d",
+      }),
+    );
+    app.use(express.static(CLIENT_DIST, { index: false, maxAge: 0 }));
     app.get(/^\/(?!api\/).*/, (_req, res) => {
       res.set(
         "Content-Security-Policy",
