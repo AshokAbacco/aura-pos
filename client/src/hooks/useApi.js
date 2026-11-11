@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../lib/api.js";
+import { readCache, writeCache } from "../lib/cache.js";
 
 /**
  * GET a URL with loading/error state. Pass null to skip.
@@ -10,6 +11,8 @@ import { api, errorMessage } from "../lib/api.js";
  * - State remembers which URL it belongs to: right after the URL changes callers see loading=true
  *   and data=null — never another URL's data.
  * - Pull-to-refresh in the app shell fires `aura:refresh`; every mounted useApi reloads.
+ * - The last answer for each URL is cached (lib/cache.js): a page you have opened before shows its
+ *   data at once and refreshes in the background.
  */
 export function useApi(url, deps = []) {
   const [state, setState] = useState({
@@ -34,20 +37,31 @@ export function useApi(url, deps = []) {
       });
       return;
     }
-    setState((s) =>
-      s.url === url && s.data != null
-        ? { ...s, refreshing: true, error: null }
-        : {
-            url,
-            data: null,
-            meta: null,
-            loading: true,
-            refreshing: false,
-            error: null,
-          },
-    );
+    const cached = readCache(url);
+    setState((s) => {
+      if (s.url === url && s.data != null)
+        return { ...s, refreshing: true, error: null };
+      if (cached)
+        return {
+          url,
+          data: cached.data,
+          meta: cached.meta,
+          loading: false,
+          refreshing: true,
+          error: null,
+        };
+      return {
+        url,
+        data: null,
+        meta: null,
+        loading: true,
+        refreshing: false,
+        error: null,
+      };
+    });
     try {
       const r = await api.get(url);
+      writeCache(url, { data: r.data.data, meta: r.data.meta ?? null });
       if (n === seq.current)
         setState({
           url,
@@ -74,11 +88,13 @@ export function useApi(url, deps = []) {
     load();
   }, [load]);
   useRefreshListener(load);
+  // Right after the URL changes (before the effect runs) show its cached answer, if any.
   const stale = state.url !== url;
+  const early = stale ? readCache(url) : undefined;
   return {
-    data: stale ? null : state.data,
-    meta: stale ? null : state.meta,
-    loading: stale ? !!url : state.loading,
+    data: stale ? early?.data ?? null : state.data,
+    meta: stale ? early?.meta ?? null : state.meta,
+    loading: stale ? !!url && !early : state.loading,
     refreshing: stale ? false : state.refreshing,
     error: stale ? null : state.error,
     reload: load,

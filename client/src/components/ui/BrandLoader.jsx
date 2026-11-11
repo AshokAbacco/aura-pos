@@ -9,6 +9,8 @@ import "./BrandLoader.css";
 export function BrandLoader({
   message = "Preparing your experience",
   onRetry,
+  onSignIn,
+  detail,
 }) {
   return (
     <div className="salora-loader" role="status" aria-live="polite">
@@ -61,6 +63,16 @@ export function BrandLoader({
               Try now
             </button>
           )}
+          {onSignIn && (
+            <button
+              type="button"
+              className="salora-loader-link"
+              onClick={onSignIn}
+            >
+              Go to sign in
+            </button>
+          )}
+          {detail && <p className="salora-loader-detail">{detail}</p>}
         </div>
 
         <div className="salora-loader-footer">BEAUTY IN EVERY DETAIL</div>

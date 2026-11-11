@@ -14,24 +14,56 @@ import {
   refreshSession,
   setAccessToken,
   setSessionLostHandler,
+  takeRefreshedMe,
 } from "../lib/api.js";
+import { getRefreshToken } from "../lib/native.js";
+import {
+  clearCache,
+  readSavedMe,
+  saveMe,
+  setCacheScope,
+} from "../lib/cache.js";
 
 const AuthContext = createContext(null);
 
+/**
+ * Who is signed in.
+ * status: loading | authed | anon | offline (signed in, but the server can't be reached yet)
+ *
+ * Opening the phone app is instant: the last profile is kept on the device, so the app shows the
+ * dashboard straight away (with the last data, see lib/cache.js) and restores the session in the
+ * background. Only a refused session (401) signs the user out.
+ */
 export function AuthProvider({ children }) {
-  const [me, setMe] = useState(null);
-  // loading | authed | anon | offline (signed in, but the server can't be reached yet: keep the session and retry)
+  const [me, setMeState] = useState(null);
   const [status, setStatus] = useState("loading");
   const retryTimer = useRef(null);
+
+  const setMe = useCallback((m) => {
+    setMeState(m);
+    saveMe(m);
+    setCacheScope(m?.user.id);
+    if (
+      m &&
+      !m.branches.some((b) => b.id === sessionStorage.getItem("aura.branch")) &&
+      m.branches[0]
+    )
+      sessionStorage.setItem("aura.branch", m.branches[0].id);
+  }, []);
 
   const loadMe = useCallback(async () => {
     const r = await api.get("/auth/me");
     setMe(r.data.data);
-    if (!sessionStorage.getItem("aura.branch") && r.data.data.branches[0])
-      sessionStorage.setItem("aura.branch", r.data.data.branches[0].id);
     setStatus("authed");
     return r.data.data;
-  }, []);
+  }, [setMe]);
+
+  const signedOut = useCallback(() => {
+    setAccessToken(null);
+    setMe(null);
+    clearCache();
+    setStatus("anon");
+  }, [setMe]);
 
   /** Restore the session (HttpOnly cookie in the browser, saved token in the app). */
   const restore = useCallback(
@@ -39,36 +71,41 @@ export function AuthProvider({ children }) {
       clearTimeout(retryTimer.current);
       try {
         await refreshSession();
-        await loadMe();
+        const m = takeRefreshedMe();
+        if (m) {
+          setMe(m);
+          setStatus("authed");
+        } else await loadMe();
       } catch (e) {
         if (!isTransient(e)) {
-          setStatus("anon");
+          signedOut();
           return;
         } // the server said no: sign in again
-        // No connection or the server is starting: stay signed in and try again (5 s, 10 s … up to 30 s).
-        setStatus("offline");
+        // No connection or the server is starting. With a saved profile the app keeps working on the
+        // last data; otherwise show "Connecting…". Either way keep trying (5 s, 10 s … up to 30 s).
+        setStatus((s) => (s === "authed" ? "authed" : "offline"));
         retryTimer.current = setTimeout(
           () => restore(attempt + 1),
           Math.min(30000, 5000 * (attempt + 1)),
         );
       }
     },
-    [loadMe],
+    [loadMe, setMe, signedOut],
   );
 
   useEffect(() => {
-    setSessionLostHandler(() => {
-      setAccessToken(null);
-      setMe(null);
-      setStatus("anon");
-    });
-    restore();
+    setSessionLostHandler(signedOut);
+    (async () => {
+      // Phone app: open straight onto the last screen data while the session is restored.
+      const saved = readSavedMe();
+      if (saved && (await getRefreshToken())) {
+        setMe(saved);
+        setStatus("authed");
+      }
+      restore();
+    })();
     const onEnt = () => loadMe().catch(() => {});
-    const onOnline = () =>
-      setStatus((s) => {
-        if (s === "offline") restore();
-        return s;
-      });
+    const onOnline = () => restore();
     window.addEventListener("aura:entitlement", onEnt);
     window.addEventListener("online", onOnline);
     return () => {
@@ -76,15 +113,25 @@ export function AuthProvider({ children }) {
       window.removeEventListener("online", onOnline);
       clearTimeout(retryTimer.current);
     };
-  }, [loadMe, restore]);
+  }, [loadMe, restore, setMe, signedOut]);
 
   const login = useCallback(
     async (email, password, remember = true) => {
-      const r = await api.post("/auth/login", { email, password, remember });
+      // ?include=me: the profile comes back with the tokens, so the dashboard opens after one request.
+      const r = await api.post("/auth/login?include=me", {
+        email,
+        password,
+        remember,
+      });
       setAccessToken(r.data.data.accessToken);
+      if (r.data.data.me) {
+        setMe(r.data.data.me);
+        setStatus("authed");
+        return r.data.data.me;
+      }
       return loadMe();
     },
-    [loadMe],
+    [loadMe, setMe],
   );
 
   const adoptToken = useCallback(
@@ -96,11 +143,13 @@ export function AuthProvider({ children }) {
   );
 
   const logout = useCallback(async () => {
-    await endSession();
-    setMe(null);
-    setStatus("anon");
+    clearTimeout(retryTimer.current);
+    // Show the login screen straight away; the server is told in the background (it may be unreachable).
+    const ending = endSession();
+    signedOut();
     sessionStorage.removeItem("aura.branch");
-  }, []);
+    await ending;
+  }, [signedOut]);
 
   const value = useMemo(
     () => ({

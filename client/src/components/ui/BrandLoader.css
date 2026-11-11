@@ -317,3 +317,24 @@
 .salora-loader {
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
+
+.salora-loader-link {
+    display: block;
+    margin: 10px auto 0;
+    background: none;
+    border: 0;
+    color: var(--burgundy);
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+
+.salora-loader-detail {
+    margin-top: 10px;
+    max-width: 260px;
+    color: #a08f88;
+    font-size: 10px;
+    word-break: break-all;
+}

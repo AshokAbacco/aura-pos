@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Figtree Variable", "Figtree", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-display: "Fraunces", Georgia, serif;
+  --font-display: "Fraunces Variable", "Fraunces", Georgia, serif;
   --color-rose-50: #fdf4f5;
   --color-rose-100: #fbe8ea;
   --color-rose-200: #f7d5d8;

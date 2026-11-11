@@ -75,6 +75,10 @@ export function createApp() {
         "X-Client-Platform",
       ],
       exposedHeaders: ["x-request-id", "content-disposition"],
+      // The phone apps call the API from another origin, so the browser asks "may I?" (an OPTIONS
+      // preflight) before requests. Let it remember the answer for 2 hours instead of asking every time:
+      // without this every API call in the app costs two round trips.
+      maxAge: 7200,
     }),
   );
 

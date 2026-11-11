@@ -1,5 +1,6 @@
 import { parse, ok, created } from "../../core/utils/http.js";
 import { AppError, unauthorized } from "../../core/errors/errors.js";
+import { authenticate } from "../../core/middleware/auth.middleware.js";
 import { env } from "../../config/env.js";
 import { prisma } from "../../core/database/prisma.js";
 import { entitlementSummary } from "../subscription/subscription.summary.js";
@@ -95,14 +96,28 @@ export async function register(req, res) {
 export async function login(req, res) {
   const body = parse(loginSchema, req.body);
   const user = await auth.checkCredentials(body, req.id);
-  ok(
-    res,
-    tokens(
-      req,
-      res,
-      await startSession(req, res, user, { remember: body.remember }),
-    ),
-  );
+  const accessToken = await startSession(req, res, user, {
+    remember: body.remember,
+  });
+  ok(res, {
+    ...tokens(req, res, accessToken),
+    ...(await withMe(req, accessToken)),
+  });
+}
+
+/**
+ * `?include=me` on login/refresh also returns what GET /auth/me would, in the same response:
+ * one round trip instead of two when the app opens or someone signs in.
+ */
+async function withMe(req, accessToken) {
+  if (req.query?.include !== "me") return {};
+  try {
+    req.headers.authorization = `Bearer ${accessToken}`;
+    await authenticate(req, null, () => {});
+    return { me: await mePayload(req) };
+  } catch {
+    return {};
+  } // the client falls back to GET /auth/me
 }
 
 export async function refresh(req, res) {
@@ -119,7 +134,10 @@ export async function refresh(req, res) {
     issueRefresh(req, res, refreshToken, {
       persistent: !req.cookies?.[SESSION_ONLY_COOKIE],
     });
-    ok(res, tokens(req, res, accessToken));
+    ok(res, {
+      ...tokens(req, res, accessToken),
+      ...(await withMe(req, accessToken)),
+    });
   } catch (err) {
     clearRefreshCookie(res, REFRESH_COOKIE);
     throw err;
@@ -134,8 +152,12 @@ export async function logout(req, res) {
 }
 
 export async function me(req, res) {
+  ok(res, await mePayload(req));
+}
+
+async function mePayload(req) {
   const u = await auth.currentUser(req.ctx.userId);
-  ok(res, {
+  return {
     user: {
       id: u.id,
       name: u.name,
@@ -156,7 +178,7 @@ export async function me(req, res) {
       .map((b) => ({ id: b.id, name: b.name, code: b.code })),
     permissions: [...req.ctx.permissions].sort(),
     entitlement: entitlementSummary(req.ctx.entitlement, req.ctx.subscription),
-  });
+  };
 }
 
 export async function verifyEmail(req, res) {

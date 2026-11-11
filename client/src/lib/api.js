@@ -37,8 +37,11 @@ export const api = axios.create({
 });
 
 /** True for "couldn't reach the server" (no response, timeout, gateway errors while the host starts). */
+// Only real network/HTTP failures count. A plain Error (e.g. "no saved session" on a fresh install)
+// is not a connection problem and must send the user to the login screen.
 export const isTransient = (e) =>
-  !e?.response || [502, 503, 504].includes(e.response.status);
+  !!e?.isAxiosError &&
+  (!e.response || [502, 503, 504].includes(e.response.status));
 
 // Tell the shell when a request is slow, so it can say "server is waking up" instead of looking frozen.
 let pending = 0;
@@ -63,11 +66,16 @@ api.interceptors.response.use(async (r) => {
   return r;
 });
 
-api.interceptors.request.use((cfg) => {
+api.interceptors.request.use(async (cfg) => {
+  // Opening the app: pages start loading while the session is still being restored. Wait for it
+  // instead of firing a request that is certain to be refused (and then retried).
+  if (!accessToken && refreshing && !cfg.url?.startsWith("/auth/"))
+    await refreshing.catch(() => {});
   if (!cfg._tracked) {
     cfg._tracked = true;
     track(1);
   }
+  cfg._t0 ??= Date.now();
   if (accessToken) cfg.headers.Authorization = `Bearer ${accessToken}`;
   const branch = sessionStorage.getItem("aura.branch");
   if (branch && !cfg.headers["X-Branch-Id"])
@@ -88,13 +96,21 @@ async function withRetry(fn, tries = 3) {
 }
 
 let refreshing = null;
+let refreshedMe = null;
+/** The profile that came back with the last refresh (`?include=me`), handed over once. */
+export function takeRefreshedMe() {
+  const m = refreshedMe;
+  refreshedMe = null;
+  return m;
+}
+
 export function refreshSession() {
   refreshing ??= (async () => {
     const body = isNative ? { refreshToken: await getRefreshToken() } : null;
     if (isNative && !body.refreshToken) throw new Error("No saved session");
     try {
       const r = await withRetry(() =>
-        axios.post(`${API_BASE_URL}/auth/refresh`, body, {
+        axios.post(`${API_BASE_URL}/auth/refresh?include=me`, body, {
           withCredentials: !isNative,
           headers: BASE_HEADERS,
           timeout: TIMEOUT_MS,
@@ -102,6 +118,7 @@ export function refreshSession() {
       );
       if (isNative) await setRefreshToken(r.data.data.refreshToken);
       setAccessToken(r.data.data.accessToken);
+      refreshedMe = r.data.data.me ?? null;
       return r.data.data.accessToken;
     } catch (e) {
       if (isNative && e.response?.status === 401) await setRefreshToken(null); // revoked or expired
@@ -121,13 +138,27 @@ export async function endSession() {
   setAccessToken(null);
 }
 
+// Slow requests are written to the console as one plain line, e.g. "[api] slow GET /clients 200 4210ms",
+// so they show up readable in Android Studio's Logcat (filter: Capacitor/Console) and Safari's console.
+function logSlow(cfg, status) {
+  const ms = Date.now() - (cfg?._t0 ?? Date.now());
+  if (ms > 1500)
+    console.warn(
+      `[api] slow ${String(cfg?.method ?? "get").toUpperCase()} ${cfg?.url} ${
+        status ?? "no-response"
+      } ${ms}ms`,
+    );
+}
+
 api.interceptors.response.use(
   (r) => {
+    logSlow(r.config, r.status);
     if (r.config._tracked) track(-1);
     return r;
   },
   async (err) => {
     const cfg = err.config ?? {};
+    logSlow(cfg, err.response?.status ?? err.code);
     const code = err.response?.data?.error?.code;
     // Retry reads that never reached the app (offline blip, timeout, host restarting).
     if (

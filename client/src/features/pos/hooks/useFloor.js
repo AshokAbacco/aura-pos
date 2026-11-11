@@ -1,22 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../../../lib/api.js";
 import { useRefreshListener } from "../../../hooks/useApi.js";
+import { readCache, writeCache } from "../../../lib/cache.js";
 
 /**
  * The floor plan: chairs grouped by floor with their open tickets.
  * Refreshes every 20 s and when the tab regains focus, so several counters stay in step.
  */
 export function useFloor() {
-  const [state, setState] = useState({
-    chairs: null,
-    error: null,
-    loading: true,
-    updatedAt: null,
+  // Start from the last floor plan we saw (instant), then refresh.
+  const [state, setState] = useState(() => {
+    const c = readCache("/pos/floor");
+    return c
+      ? { chairs: c.data.chairs, error: null, loading: false, updatedAt: null }
+      : { chairs: null, error: null, loading: true, updatedAt: null };
   });
   const alive = useRef(true);
   const load = useCallback(async () => {
     try {
       const r = await api.get("/pos/floor");
+      writeCache("/pos/floor", { data: r.data.data });
       if (alive.current)
         setState({
           chairs: r.data.data.chairs,

@@ -656,7 +656,7 @@ export const PRIVACY = {
             "The website uses one essential cookie to keep you signed in securely. It cannot be read by page scripts and is not used for advertising.",
             "The mobile apps keep your sign-in in the app’s private storage on your device until you sign out.",
             "We do not use advertising or tracking cookies.",
-            "Our website loads fonts from Google Fonts, and the payment page loads Razorpay’s checkout. These providers receive your IP address when they are loaded, under their own privacy policies.",
+            "When you pay for a subscription, the payment page loads Razorpay’s checkout, which receives your IP address under Razorpay’s own privacy policy.",
           ],
         },
       ],

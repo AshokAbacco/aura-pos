@@ -107,12 +107,39 @@ describe("login, refresh rotation and logout", () => {
     const rt2 = cookieValue(r1.headers["set-cookie"], "aura_rt");
     expect(rt2).not.toBe(rt1);
 
-    // Reusing the old token = theft signal → everything in the family dies, incl. rt2 and its access token.
+    // rt2 is used (the real client moved on) → rt3
+    const r2 = await refresh(rt2);
+    expect(r2.status).toBe(200);
+    const rt3 = cookieValue(r2.headers["set-cookie"], "aura_rt");
+
+    // Reusing rt1, whose replacement WAS used = theft signal → everything in the family dies.
     expect((await refresh(rt1)).status).toBe(401);
-    expect((await refresh(rt2)).status).toBe(401);
+    expect((await refresh(rt3)).status).toBe(401);
     expect(
-      (await client(r1.body.data.accessToken).get("/api/v1/auth/me")).status,
+      (await client(r2.body.data.accessToken).get("/api/v1/auth/me")).status,
     ).toBe(401);
+  });
+
+  it("a lost refresh response does not sign the user out (replacement never used)", async () => {
+    const s = await registerSalon("Lost Response");
+    const rt1 = cookieValue(s.cookies, "aura_rt");
+    const lost = await refresh(rt1); // the phone never receives this answer
+    expect(lost.status).toBe(200);
+    const retry = await refresh(rt1); // so it tries again with the old token
+    expect(retry.status).toBe(200);
+    expect(cookieValue(retry.headers["set-cookie"], "aura_rt")).toBeTruthy();
+    // the unseen replacement is cancelled; the new one works
+    expect(
+      (await refresh(cookieValue(lost.headers["set-cookie"], "aura_rt")))
+        .status,
+    ).toBe(401);
+  });
+
+  it("two tabs refreshing with the same token at the same moment both stay signed in", async () => {
+    const s = await registerSalon("Two Tabs");
+    const rt1 = cookieValue(s.cookies, "aura_rt");
+    const [a, b] = await Promise.all([refresh(rt1), refresh(rt1)]);
+    expect([a.status, b.status]).toEqual([200, 200]);
   });
 
   it("requires the CSRF header on cookie-authenticated refresh", async () => {
@@ -250,6 +277,40 @@ describe("Android app (native) sessions", () => {
       .set("X-Requested-With", "XMLHttpRequest")
       .set("Origin", "https://localhost");
 
+  it("login and refresh with ?include=me return the profile in the same response; preflights are cacheable", async () => {
+    const s = await registerSalon("Include Me");
+    await prisma.user.update({
+      where: { email: s.email },
+      data: { passwordHash: await hashPassword(PASSWORD) },
+    });
+    const login = await native(
+      api().post("/api/v1/auth/login?include=me"),
+    ).send({ email: s.email, password: PASSWORD });
+    expect(login.status).toBe(200);
+    expect(login.body.data.me).toMatchObject({
+      user: { email: s.email },
+      tenant: { displayName: "Include Me" },
+    });
+    expect(login.body.data.me.permissions.length).toBeGreaterThan(5);
+    const r = await native(api().post("/api/v1/auth/refresh?include=me")).send({
+      refreshToken: login.body.data.refreshToken,
+    });
+    expect(r.status).toBe(200);
+    expect(r.body.data.me.branches.length).toBe(1);
+    const plain = await native(api().post("/api/v1/auth/refresh")).send({
+      refreshToken: r.body.data.refreshToken,
+    });
+    expect(plain.body.data.me).toBeUndefined();
+
+    const pre = await api()
+      .options("/api/v1/clients")
+      .set("Origin", "https://localhost")
+      .set("Access-Control-Request-Method", "GET")
+      .set("Access-Control-Request-Headers", "authorization,x-branch-id");
+    expect(pre.status).toBe(204);
+    expect(pre.headers["access-control-max-age"]).toBe("7200");
+  });
+
   it("gets the refresh token in the body (no cookie), rotates it, detects reuse and logs out", async () => {
     const s = await registerSalon("Native App");
     await prisma.user.update({
@@ -279,7 +340,11 @@ describe("Android app (native) sessions", () => {
     expect(second).not.toBe(first);
     expect(r1.body.data.accessToken).toBeTruthy();
 
-    // Using the old token again = theft signal: the whole session is revoked
+    // The app used `second`; now someone presents `first` again = theft signal: the whole session is revoked
+    const r2 = await native(api().post("/api/v1/auth/refresh")).send({
+      refreshToken: second,
+    });
+    expect(r2.status).toBe(200);
     expect(
       (
         await native(api().post("/api/v1/auth/refresh")).send({
@@ -290,10 +355,35 @@ describe("Android app (native) sessions", () => {
     expect(
       (
         await native(api().post("/api/v1/auth/refresh")).send({
-          refreshToken: second,
+          refreshToken: r2.body.data.refreshToken,
         })
       ).status,
     ).toBe(401);
+  });
+
+  it("app sessions last a year and slide forward on each refresh", async () => {
+    const s = await registerSalon("Native Long");
+    await prisma.user.update({
+      where: { email: s.email },
+      data: { passwordHash: await hashPassword(PASSWORD) },
+    });
+    const t = (
+      await native(api().post("/api/v1/auth/login")).send({
+        email: s.email,
+        password: PASSWORD,
+      })
+    ).body.data.refreshToken;
+    const sess = await prisma.session.findFirst({
+      where: {
+        principalId: (
+          await prisma.user.findUnique({ where: { email: s.email } })
+        ).id,
+        revokedAt: null,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    expect((sess.expiresAt - Date.now()) / 86400000).toBeGreaterThan(360);
+    expect(t).toBeTruthy();
   });
 
   it("logout revokes the body token", async () => {
