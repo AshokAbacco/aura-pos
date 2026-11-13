@@ -23,7 +23,9 @@ import {
   resetSchema,
   changePasswordSchema,
   acceptInviteSchema,
+  profileSchema,
 } from "./auth.validation.js";
+import { audit } from "../../core/utils/audit.js";
 
 /** Cookie-authenticated endpoints require a header that cross-site forms cannot send (CSRF guard). */
 function requireCsrfHeader(req) {
@@ -155,6 +157,22 @@ export async function me(req, res) {
   ok(res, await mePayload(req));
 }
 
+/** Update your own name / mobile number. Any signed-in user, including the owner. */
+export async function updateProfile(req, res) {
+  const body = parse(profileSchema, req.body);
+  const data = {
+    ...(body.name ? { name: body.name } : {}),
+    ...(body.phone !== undefined ? { phone: body.phone || null } : {}),
+  };
+  await prisma.user.update({ where: { id: req.ctx.userId }, data });
+  await audit(prisma, req.ctx, "user.profile_update", {
+    entityType: "User",
+    entityId: req.ctx.userId,
+    detail: { name: !!body.name, phone: body.phone !== undefined },
+  });
+  ok(res, await mePayload(req));
+}
+
 async function mePayload(req) {
   const u = await auth.currentUser(req.ctx.userId);
   return {
@@ -162,6 +180,7 @@ async function mePayload(req) {
       id: u.id,
       name: u.name,
       email: u.email,
+      phone: u.phone,
       role: u.role,
       emailVerified: !!u.emailVerifiedAt,
     },

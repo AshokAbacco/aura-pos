@@ -16,7 +16,9 @@
     "start:prod": "cross-env SERVE_CLIENT=true node src/server.js",
     "db:migrate:fallback": "node scripts/migrate.js",
     "jobs": "node src/jobs/index.js",
-    "setup": "node scripts/setup.js"
+    "setup": "node scripts/setup.js",
+    "admin:set": "node scripts/platform-admin.js",
+    "check:phone": "node scripts/check-phone-login.js"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

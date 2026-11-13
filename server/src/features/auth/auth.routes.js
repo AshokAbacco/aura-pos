@@ -30,7 +30,10 @@ const refreshLimit = limiter(300); // every app open / page reload refreshes: mu
 const perEmail = limiter(
   8,
   15,
-  (req) => `email:${String(req.body?.email ?? "").toLowerCase()}`,
+  (req) =>
+    `id:${String(req.body?.identifier ?? req.body?.email ?? "")
+      .toLowerCase()
+      .replace(/\s/g, "")}`,
 );
 
 router.post("/register", perIp, c.register);
@@ -38,6 +41,7 @@ router.post("/login", perIp, perEmail, c.login);
 router.post("/refresh", refreshLimit, c.refresh);
 router.post("/logout", c.logout);
 router.get("/me", authenticate, c.me);
+router.patch("/me", authenticate, c.updateProfile); // your own name / mobile number
 
 router.post("/verify-email", perIp, c.verifyEmail);
 router.post(

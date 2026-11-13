@@ -22,11 +22,61 @@ model PlatformAdmin {
   id           String    @id @default(uuid()) @db.Uuid
   email        String    @unique
   name         String
+  phone        String?
+  role         String    @default("SUPER_ADMIN") // SUPER_ADMIN | SUPPORT (customer support team)
   passwordHash String
   isActive     Boolean   @default(true)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  notes        TenantNote[]
+  messages     TenantMessage[]
+}
+
+/** Platform-wide settings (e.g. how salon users sign in), edited from the platform admin. */
+model PlatformSetting {
+  key       String   @id
+  value     Json
+  updatedBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+}
+
+/** Support team notes on a salon: calls, emails, issues, and follow-ups with a due date. */
+model TenantNote {
+  id         String        @id @default(uuid()) @db.Uuid
+  tenantId   String        @db.Uuid
+  tenant     Tenant        @relation(fields: [tenantId], references: [id])
+  authorId   String        @db.Uuid
+  author     PlatformAdmin @relation(fields: [authorId], references: [id])
+  kind       String        @default("NOTE") // NOTE | CALL | EMAIL | WHATSAPP | ISSUE
+  body       String
+  followUpAt DateTime?
+  status     String        @default("OPEN") // OPEN | DONE (follow-ups)
+  doneAt     DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([status, followUpAt])
+}
+
+/** Messages from the platform to a salon: renewal reminders, new plan alerts, announcements. Shown in the salon app's bell; optionally emailed. */
+model TenantMessage {
+  id          String         @id @default(uuid()) @db.Uuid
+  tenantId    String         @db.Uuid
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  kind        String         // RENEWAL | NEW_PLAN | ANNOUNCEMENT | CUSTOM
+  title       String
+  body        String
+  link        String?
+  createdById String?        @db.Uuid
+  createdBy   PlatformAdmin? @relation(fields: [createdById], references: [id])
+  batchId     String?        @db.Uuid // one send to many salons
+  emailedTo   String?
+  readAt      DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([batchId])
 }
 
 enum BillingInterval {
@@ -110,6 +160,8 @@ model Tenant {
   cashShifts          CashShift[]
   notifications       Notification[]
   files               StoredFile[]
+  supportNotes        TenantNote[]
+  messages            TenantMessage[]
 }
 
 enum SubscriptionStatus {
@@ -245,6 +297,7 @@ model User {
 
   @@unique([email]) // one login identity per email across the platform
   @@index([tenantId])
+  @@index([phone])
 }
 
 model Session {

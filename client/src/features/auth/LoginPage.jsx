@@ -1,18 +1,44 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { LuMail, LuSmartphone } from "react-icons/lu";
 import { errorMessage } from "../../lib/api.js";
 import { useAuth } from "../../hooks/useAuth.js";
+import { cx } from "../../utils/cx.js";
 import { AuthLayout, FormError } from "./components/AuthLayout.jsx";
 import { AuthInput, AuthSubmit } from "./components/AuthInput.jsx";
+import { useLoginMethod } from "./hooks/useLoginMethod.js";
 
-const schema = z.object({
-  email: z.string().email("Enter your email"),
-  password: z.string().min(1, "Enter your password"),
-  remember: z.boolean(),
-});
+/** One schema; the identifier rule follows the field currently shown (email or mobile). */
+const makeSchema = (modeRef) =>
+  z
+    .object({
+      identifier: z.string().trim(),
+      password: z.string().min(1, "Enter your password"),
+      remember: z.boolean(),
+    })
+    .superRefine((v, ctx) => {
+      if (
+        modeRef.current === "phone" &&
+        v.identifier.replace(/\D/g, "").length < 10
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["identifier"],
+          message: "Enter your 10-digit mobile number",
+        });
+      if (
+        modeRef.current === "email" &&
+        !z.email().safeParse(v.identifier).success
+      )
+        ctx.addIssue({
+          code: "custom",
+          path: ["identifier"],
+          message: "Enter your email address",
+        });
+    });
 
 const HERO = {
   eyebrow: "Welcome back",
@@ -39,28 +65,58 @@ const HERO = {
   image: "authLoginSalon",
 };
 
+/**
+ * Sign in with email, mobile number, or either — whichever the platform admin has chosen
+ * (Platform admin → Settings). With "either", a switch above the field picks Email or Mobile.
+ */
 export default function LoginPage() {
   const { login, status } = useAuth();
   const navigate = useNavigate();
+  const method = useLoginMethod();
+  const [mode, setModeState] = useState(method === "PHONE" ? "phone" : "email");
+  const modeRef = useRef(mode);
+  const setMode = (m) => {
+    modeRef.current = m;
+    setModeState(m);
+  };
+  const schema = useMemo(() => makeSchema(modeRef), []);
+  useEffect(() => {
+    if (method === "PHONE") setMode("phone");
+    if (method === "EMAIL") setMode("email");
+  }, [method]);
   const [err, setErr] = useState("");
   const {
     register,
     handleSubmit,
+    reset,
+    getValues,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { remember: true },
+    defaultValues: { remember: true, identifier: "" },
   });
   if (status === "authed") return <Navigate to="/app" replace />;
+
+  const switchTo = (m) => {
+    if (m === mode) return;
+    setErr("");
+    setMode(m);
+    reset({ ...getValues(), identifier: "" });
+  };
   const submit = handleSubmit(async (v) => {
     setErr("");
+    const identifier =
+      mode === "phone"
+        ? v.identifier.replace(/\D/g, "").slice(-10)
+        : v.identifier;
     try {
-      await login(v.email, v.password, v.remember);
+      await login(identifier, v.password, v.remember);
       navigate("/app");
     } catch (e) {
       setErr(errorMessage(e));
     }
   });
+
   return (
     <AuthLayout
       hero={{
@@ -73,7 +129,13 @@ export default function LoginPage() {
         ],
       }}
       title="Sign in"
-      subtitle="To your salon’s billing counter."
+      subtitle={
+        method === "PHONE"
+          ? "Use your mobile number and password."
+          : method === "BOTH"
+          ? "Use your email or mobile number."
+          : "To your salon’s billing counter."
+      }
       footer={
         <>
           New to Salora Glam?{" "}
@@ -87,16 +149,60 @@ export default function LoginPage() {
       }
     >
       <form onSubmit={submit} className="space-y-4" noValidate>
+        {method === "BOTH" && (
+          <div
+            role="tablist"
+            aria-label="Sign in with"
+            className="grid grid-cols-2 gap-1 rounded-xl bg-petal/70 p-1 ring-1 ring-blush"
+          >
+            {[
+              ["email", "Email", LuMail],
+              ["phone", "Mobile number", LuSmartphone],
+            ].map(([k, l, Icon]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={mode === k}
+                onClick={() => switchTo(k)}
+                className={cx(
+                  "flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-semibold transition",
+                  mode === k
+                    ? "bg-mauve text-white shadow-sm"
+                    : "text-ink/70 hover:bg-white/70 hover:text-ink",
+                )}
+              >
+                <Icon size={16} aria-hidden /> {l}
+              </button>
+            ))}
+          </div>
+        )}
         <FormError msg={err} />
-        <AuthInput
-          label="Email"
-          icon="mail"
-          type="email"
-          autoComplete="email"
-          placeholder="Enter your email"
-          {...register("email")}
-          error={errors.email?.message}
-        />
+        {mode === "phone" ? (
+          <AuthInput
+            key="phone"
+            label="Mobile number"
+            icon="phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            placeholder="10-digit mobile number"
+            maxLength={16}
+            {...register("identifier")}
+            error={errors.identifier?.message}
+          />
+        ) : (
+          <AuthInput
+            key="email"
+            label="Email"
+            icon="mail"
+            type="email"
+            autoComplete="email"
+            placeholder="Enter your email"
+            {...register("identifier")}
+            error={errors.identifier?.message}
+          />
+        )}
         <AuthInput
           label="Password"
           icon="lock"
@@ -125,6 +231,12 @@ export default function LoginPage() {
         <AuthSubmit busy={isSubmitting} arrow={false}>
           Sign in
         </AuthSubmit>
+        {mode === "phone" && (
+          <p className="text-center text-xs text-stone-500">
+            Forgot your password? We’ll email a reset link to the address on
+            your account.
+          </p>
+        )}
       </form>
     </AuthLayout>
   );

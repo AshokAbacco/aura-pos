@@ -34,6 +34,7 @@ import { router as authRoutes } from "./features/auth/auth.routes.js";
 import { router as publicRoutes } from "./features/public/public.routes.js";
 import { router as platformRoutes } from "./features/platform-admin/platform.routes.js";
 import { router as subscriptionRoutes } from "./features/subscription/subscription.routes.js";
+import { router as inboxRoutes } from "./features/inbox/inbox.routes.js";
 import { router as webhookRoutes } from "./integrations/razorpay/razorpay.webhook.routes.js";
 import { router as invoiceRoutes } from "./features/invoices/invoices.routes.js";
 import { router as pnlRoutes } from "./features/pnl/pnl.routes.js";
@@ -122,6 +123,7 @@ export function createApp() {
   api.use("/platform", platformRoutes);
   // Logged in, but reachable even when the subscription has expired (so the salon can renew)
   api.use("/billing", authenticate, subscriptionRoutes);
+  api.use("/inbox", authenticate, inboxRoutes);
   // Salon business features: logged in + account not suspended. Writes also check the subscription.
   const salon = express.Router();
   salon.use(authenticate, requireReadable);

@@ -115,11 +115,12 @@ export function AuthProvider({ children }) {
     };
   }, [loadMe, restore, setMe, signedOut]);
 
+  /** `identifier` is an email or a mobile number (the platform setting decides which are allowed). */
   const login = useCallback(
-    async (email, password, remember = true) => {
+    async (identifier, password, remember = true) => {
       // ?include=me: the profile comes back with the tokens, so the dashboard opens after one request.
       const r = await api.post("/auth/login?include=me", {
-        email,
+        identifier,
         password,
         remember,
       });

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { FiLogOut, FiMenu, FiClock, FiChevronLeft } from "react-icons/fi";
 import { BrandLogo } from "../../../components/ui/BrandLogo.jsx";
 import { NAV_ITEMS } from "../navItems.js";
+import { InboxBell } from "./InboxBell.jsx";
 
 const TOP_LEVEL = new Set(NAV_ITEMS.map((n) => n.to));
 
@@ -100,6 +101,7 @@ export function TopBar({ me, onMenu, onLogout }) {
           <span className="hidden text-sm text-stone-600 md:inline">
             {me?.user.name}
           </span>
+          <InboxBell />
           <button
             onClick={onLogout}
             className="rounded-md p-2 text-stone-500 hover:bg-stone-100"

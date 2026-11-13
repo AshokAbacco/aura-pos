@@ -37,6 +37,11 @@ export class ErrorBoundary extends Component {
         <p className="text-sm text-stone-600">
           Check your connection and try again. Your saved data is safe.
         </p>
+        {this.state.error?.message && (
+          <p className="max-w-sm break-words rounded-md bg-stone-100 px-3 py-2 font-mono text-xs text-stone-600">
+            {this.state.error.message}
+          </p>
+        )}
         <button
           onClick={() => window.location.reload()}
           className="inline-flex items-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white"

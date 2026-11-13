@@ -55,6 +55,7 @@ export async function invite(ctx, body) {
           tenantId: ctx.tenantId,
           name: body.name,
           email: body.email,
+          phone: body.phone || null,
           role: body.role,
           branchIds: body.branchIds,
           allBranches: body.allBranches,
@@ -110,7 +111,13 @@ export async function updateAccess(ctx, id, body) {
     throw forbidden("The owner account cannot be modified here");
   if (u.id === ctx.userId) throw forbidden("You cannot change your own access");
   await validBranches(ctx, body.branchIds);
-  const updated = await prisma.user.update({ where: { id: u.id }, data: body });
+  const updated = await prisma.user.update({
+    where: { id: u.id },
+    data: {
+      ...body,
+      ...(body.phone !== undefined ? { phone: body.phone || null } : {}),
+    },
+  });
   if (body.isActive === false || body.role || body.permissionRevokes)
     await revokeAllForPrincipal("user", u.id, "ACCESS_CHANGED");
   await audit(prisma, ctx, "user.access_change", {

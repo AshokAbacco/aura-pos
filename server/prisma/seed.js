@@ -126,9 +126,9 @@ async function main() {
   ).toLowerCase();
   const adminPassword =
     process.env.SEED_ADMIN_PASSWORD || "ChangeMe-Admin-2026!";
-  if (
-    !(await prisma.platformAdmin.findUnique({ where: { email: adminEmail } }))
-  ) {
+  // Only when there is no platform admin at all: once you have changed it (npm run admin:set),
+  // re-running the seed must not bring back the demo login with its well-known password.
+  if (!(await prisma.platformAdmin.count())) {
     await prisma.platformAdmin.create({
       data: {
         email: adminEmail,
